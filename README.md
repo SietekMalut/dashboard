@@ -70,3 +70,10 @@ Layout data lives with the widget in LocalStorage, so it is included in **Export
 Layouts are responsive: below 992px wide a card never shrinks under half width, and on
 phones every card becomes full width.
 
+### Asset cache
+
+Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
+GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=2`)
+on every release that touches code or styles so the change appears immediately.
+
