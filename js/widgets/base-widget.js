@@ -1,9 +1,10 @@
 (function() {
     class BaseWidget {
-        constructor(id, title, config) {
+        constructor(id, title, config, layout) {
             this.id = id;
             this.title = title || 'Untitled Widget';
             this.config = config || {};
+            this.layout = App.Layout.normalize(layout);
         }
 
         render(container) {
@@ -13,7 +14,9 @@
         // Helper to create the standard card structure
         createCardElement() {
             const col = document.createElement('div');
-            col.className = 'col s12 m6 l4'; // Responsive grid
+            col.className = 'widget-cell'; // Width/height come from the user's layout
+            col.dataset.widgetId = this.id;
+            App.Layout.applyCellSize(col, this.layout);
 
             const card = document.createElement('div');
             card.className = 'card widget-card';
@@ -23,19 +26,28 @@
 
             const cardTitle = document.createElement('span');
             cardTitle.className = 'card-title';
-            cardTitle.textContent = this.title;
+
+            // Drag handle (only visible in layout mode)
+            const handle = document.createElement('i');
+            handle.className = 'material-icons widget-handle';
+            handle.textContent = 'drag_indicator';
+            handle.title = 'Drag to move this widget';
+            handle.setAttribute('aria-hidden', 'true');
+            cardTitle.appendChild(handle);
+
+            const titleText = document.createElement('span');
+            titleText.className = 'widget-title-text';
+            titleText.textContent = this.title;
+            cardTitle.appendChild(titleText);
+
+            const actions = document.createElement('span');
+            actions.className = 'widget-actions';
 
             // Delete button
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn-flat waves-effect waves-light right';
-            deleteBtn.style.padding = '0';
-            deleteBtn.style.margin = '0';
-            deleteBtn.style.width = '24px';
-            deleteBtn.style.height = '24px';
-            deleteBtn.style.lineHeight = '24px';
-            deleteBtn.style.minHeight = '0';
-            deleteBtn.style.backgroundColor = 'transparent';
+            deleteBtn.className = 'btn-flat waves-effect waves-light widget-action-btn';
             deleteBtn.setAttribute('aria-label', `Delete ${this.title}`);
+            deleteBtn.title = 'Delete widget';
 
             const deleteIcon = document.createElement('i');
             deleteIcon.className = 'material-icons white-text';
@@ -47,19 +59,13 @@
                 const event = new CustomEvent('widget-delete', { detail: { widgetId: this.id }, bubbles: true });
                 col.dispatchEvent(event);
             };
-            cardTitle.appendChild(deleteBtn);
+            actions.appendChild(deleteBtn);
 
             // Edit button
             const editBtn = document.createElement('button');
-            editBtn.className = 'btn-flat waves-effect waves-light right';
-            editBtn.style.padding = '0';
-            editBtn.style.margin = '0';
-            editBtn.style.width = '24px';
-            editBtn.style.height = '24px';
-            editBtn.style.lineHeight = '24px';
-            editBtn.style.minHeight = '0';
-            editBtn.style.backgroundColor = 'transparent';
+            editBtn.className = 'btn-flat waves-effect waves-light widget-action-btn';
             editBtn.setAttribute('aria-label', `Edit ${this.title}`);
+            editBtn.title = 'Edit widget';
 
             const editIcon = document.createElement('i');
             editIcon.className = 'material-icons white-text';
@@ -70,7 +76,9 @@
                 const event = new CustomEvent('widget-edit', { detail: { widgetId: this.id }, bubbles: true });
                 col.dispatchEvent(event);
             };
-            cardTitle.appendChild(editBtn);
+            actions.appendChild(editBtn);
+
+            cardTitle.appendChild(actions);
 
             const widgetBody = document.createElement('div');
             widgetBody.className = 'widget-body';
@@ -78,6 +86,14 @@
             cardContent.appendChild(cardTitle);
             cardContent.appendChild(widgetBody);
             card.appendChild(cardContent);
+
+            // Resize grip (only visible in layout mode)
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'widget-resize';
+            resizeHandle.title = 'Drag to resize this widget';
+            resizeHandle.setAttribute('aria-hidden', 'true');
+            card.appendChild(resizeHandle);
+
             col.appendChild(card);
 
             return { col, widgetBody };

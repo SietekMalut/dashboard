@@ -6,8 +6,8 @@
     }
 
     class GoogleNewsWidget extends App.Widgets.RssWidget {
-        constructor(id, title, config) {
-            super(id, title, config);
+        constructor(id, title, config, layout) {
+            super(id, title, config, layout);
         }
 
         async render(container) {

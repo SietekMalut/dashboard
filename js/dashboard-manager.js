@@ -13,10 +13,19 @@
             const loadedState = App.Storage.loadState();
             if (loadedState && loadedState.dashboards && loadedState.dashboards.length > 0) {
                 this.state = loadedState;
+                this.state.dashboards.forEach(d => this.normalizeWidgetLayouts(d));
             } else {
                 // Create a default dashboard if none exists
                 this.addDashboard('Main Dashboard');
             }
+        }
+
+        // Guarantees every widget has a usable layout object (old configs and imports included).
+        normalizeWidgetLayouts(dashboard) {
+            if (!dashboard || !Array.isArray(dashboard.widgets)) return;
+            dashboard.widgets.forEach(widget => {
+                widget.layout = App.Layout.normalize(widget.layout);
+            });
         }
 
         save() {
@@ -60,14 +69,15 @@
             this.save();
         }
 
-        addWidgetToCurrent(type, title, config) {
+        addWidgetToCurrent(type, title, config, layout) {
             const activeDashboard = this.getActiveDashboard();
             if (activeDashboard) {
                 const newWidget = {
                     id: App.Utils.generateUUID(),
                     type: type,
                     title: title,
-                    config: config
+                    config: config,
+                    layout: App.Layout.normalize(layout)
                 };
                 activeDashboard.widgets.push(newWidget);
                 this.save();
@@ -76,18 +86,66 @@
             return null;
         }
 
-        updateWidget(dashboardId, widgetId, title, config) {
+        updateWidget(dashboardId, widgetId, title, config, layoutPatch) {
             const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
             if (dashboard) {
                 const widget = dashboard.widgets.find(w => w.id === widgetId);
                 if (widget) {
                     widget.title = title;
                     widget.config = config;
+                    if (layoutPatch) {
+                        widget.layout = App.Layout.normalize(
+                            Object.assign({}, widget.layout, layoutPatch)
+                        );
+                    }
                     this.save();
                     return widget;
                 }
             }
             return null;
+        }
+
+        // Persists a new widget order (array of widget ids, as they appear in the DOM).
+        reorderWidgets(dashboardId, orderedIds) {
+            const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
+            if (!dashboard || !Array.isArray(orderedIds)) return;
+
+            const remaining = new Map(dashboard.widgets.map(w => [w.id, w]));
+            const reordered = [];
+
+            orderedIds.forEach(id => {
+                if (remaining.has(id)) {
+                    reordered.push(remaining.get(id));
+                    remaining.delete(id);
+                }
+            });
+            // Keep any widget that somehow was not in the DOM.
+            remaining.forEach(w => reordered.push(w));
+
+            dashboard.widgets = reordered;
+            this.save();
+        }
+
+        setWidgetLayout(dashboardId, widgetId, layout) {
+            const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
+            if (!dashboard) return null;
+
+            const widget = dashboard.widgets.find(w => w.id === widgetId);
+            if (!widget) return null;
+
+            widget.layout = App.Layout.normalize(Object.assign({}, widget.layout, layout));
+            this.save();
+            return widget.layout;
+        }
+
+        resetLayout(dashboardId) {
+            const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
+            if (!dashboard) return;
+            const defaults = App.Layout.defaults();
+            dashboard.widgets.forEach(widget => {
+                widget.layout = Object.assign({}, defaults);
+            });
+            this.save();
         }
 
         removeWidget(dashboardId, widgetId) {
@@ -106,6 +164,7 @@
                 if (!this.state.dashboards.find(d => d.id === this.state.activeDashboardId)) {
                      this.state.activeDashboardId = this.state.dashboards.length > 0 ? this.state.dashboards[0].id : null;
                 }
+                this.state.dashboards.forEach(d => this.normalizeWidgetLayouts(d));
                 this.save();
                 return true;
             }

@@ -25,6 +25,20 @@
 
         // Event Listeners
         setupEventListeners();
+
+        // Re-apply responsive widths when the window is resized
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                document.querySelectorAll('.widget-cell').forEach(cell => {
+                    App.Layout.applyCellSize(cell, {
+                        w: cell.dataset.w,
+                        h: cell.dataset.h
+                    });
+                });
+            }, 150);
+        });
     }
 
     function renderUI() {
@@ -139,7 +153,47 @@
             }
         };
 
+        // Layout Mode Toggle
+        const layoutBtn = document.createElement('button');
+        layoutBtn.className = 'btn-outlined waves-effect';
+        layoutBtn.innerHTML = '<i class="material-icons left">dashboard_customize</i>Layout';
+        layoutBtn.setAttribute('aria-label', 'Toggle layout editing mode');
+        layoutBtn.setAttribute('aria-pressed', 'false');
+        layoutBtn.title = 'Arrange widgets: drag to move, drag the corner to resize';
+
+        // Reset Layout Button (only visible while editing the layout)
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'btn-outlined waves-effect';
+        resetBtn.innerHTML = '<i class="material-icons left">restart_alt</i>Reset';
+        resetBtn.style.display = 'none';
+        resetBtn.setAttribute('aria-label', 'Reset all widget sizes');
+        resetBtn.title = 'Reset every widget to its default size';
+        resetBtn.onclick = () => {
+            App.DashboardManager.resetLayout(activeDashboard.id);
+            renderWidgets();
+            M.toast({ html: 'Layout reset to default' });
+        };
+
+        const applyLayoutModeUI = () => {
+            const enabled = App.LayoutController.enabled;
+            layoutBtn.classList.toggle('active', enabled);
+            layoutBtn.setAttribute('aria-pressed', String(enabled));
+            resetBtn.style.display = enabled ? 'inline-flex' : 'none';
+        };
+
+        layoutBtn.onclick = () => {
+            App.LayoutController.setEnabled(!App.LayoutController.enabled);
+            applyLayoutModeUI();
+            M.toast({
+                html: App.LayoutController.enabled
+                    ? 'Layout mode: drag a card to move it, drag the corner to resize'
+                    : 'Layout saved'
+            });
+        };
+
         buttonsContainer.appendChild(addWidgetBtn);
+        buttonsContainer.appendChild(layoutBtn);
+        buttonsContainer.appendChild(resetBtn);
         buttonsContainer.appendChild(deleteBtn);
 
         headerRow.appendChild(title);
@@ -152,11 +206,29 @@
             coverTrigger: false
         });
 
+        // Widget grid (free-form 12-column layout controlled by the user)
+        const grid = document.createElement('div');
+        grid.className = 'widget-grid';
+        grid.id = 'widget-grid';
+        contentContainer.appendChild(grid);
+
+        App.LayoutController.attach({
+            grid: grid,
+            dashboardId: activeDashboard.id,
+            onReorder: (orderedIds) => {
+                App.DashboardManager.reorderWidgets(activeDashboard.id, orderedIds);
+            },
+            onResize: (widgetId, layout) => {
+                App.DashboardManager.setWidgetLayout(activeDashboard.id, widgetId, layout);
+            }
+        });
+        applyLayoutModeUI();
+
         if (activeDashboard.widgets.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.className = 'col s12 center-align grey-text';
-            emptyMsg.innerHTML = '<p>No widgets yet. Click + to add one.</p>';
-            contentContainer.appendChild(emptyMsg);
+            emptyMsg.className = 'widget-empty center-align grey-text';
+            emptyMsg.innerHTML = '<p>No widgets yet. Use “Add Widget” to create one.</p>';
+            grid.appendChild(emptyMsg);
             return;
         }
 
@@ -166,9 +238,10 @@
                     widgetData.type,
                     widgetData.id,
                     widgetData.title,
-                    widgetData.config
+                    widgetData.config,
+                    widgetData.layout
                 );
-                widget.render(contentContainer);
+                widget.render(grid);
             } catch (e) {
                 console.error('Failed to render widget:', e);
             }
@@ -199,6 +272,8 @@
             if (!type) return;
 
             const title = document.getElementById('widget-title').value.trim();
+            const widthValue = parseInt(document.getElementById('widget-layout-width').value, 10);
+            const layoutPatch = { w: isFinite(widthValue) ? widthValue : App.Layout.defaults().w };
             let config = {};
 
             if (type === 'html') {
@@ -227,12 +302,12 @@
             if (widgetId) {
                 const activeDashboard = App.DashboardManager.getActiveDashboard();
                 if (activeDashboard) {
-                    App.DashboardManager.updateWidget(activeDashboard.id, widgetId, title, config);
+                    App.DashboardManager.updateWidget(activeDashboard.id, widgetId, title, config, layoutPatch);
                 }
                 modal.removeAttribute('data-widget-id');
                 document.getElementById('confirm-add-widget').textContent = 'Add';
             } else {
-                App.DashboardManager.addWidgetToCurrent(type, title, config);
+                App.DashboardManager.addWidgetToCurrent(type, title, config, { w: layoutPatch.w, h: 0 });
             }
             renderWidgets();
         });
@@ -301,6 +376,16 @@
 
             // Populate fields
             document.getElementById('widget-title').value = widget.title || '';
+
+            // Width selector: snap the stored layout to the closest preset
+            const presets = [3, 4, 6, 8, 12];
+            const currentWidth = App.Layout.normalize(widget.layout).w;
+            const nearest = presets.reduce((best, p) =>
+                Math.abs(p - currentWidth) < Math.abs(best - currentWidth) ? p : best, presets[0]);
+            const widthSelect = document.getElementById('widget-layout-width');
+            widthSelect.value = String(nearest);
+            M.FormSelect.init(widthSelect);
+
             M.updateTextFields(); // Materialize helper to update labels
 
             if (widget.type === 'html') {
@@ -343,6 +428,9 @@
 
         // Reset inputs
         document.getElementById('widget-title').value = '';
+        const widthSelect = document.getElementById('widget-layout-width');
+        widthSelect.value = String(App.Layout.defaults().w);
+        M.FormSelect.init(widthSelect);
         document.getElementById('html-content').value = '';
         document.getElementById('rss-url').value = '';
         document.getElementById('google-news-query').value = '';

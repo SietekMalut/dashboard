@@ -196,6 +196,7 @@ textarea.materialize-textarea:focus:not([readonly]) {
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .card .card-content {
@@ -333,4 +334,143 @@ textarea.materialize-textarea:focus:not([readonly]) {
 
 #add-widget-dropdown li:hover {
     background-color: #333;
+}
+
+/* ============================================================
+   User-controlled layout: 12-column grid, free width & height
+   ============================================================ */
+
+.widget-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    margin: 0 -0.75rem;
+}
+
+.widget-cell {
+    flex: 0 0 auto;
+    width: calc(100% * var(--w, 4) / 12);
+    padding: 0 0.75rem;
+    margin-bottom: 1.5rem;
+    box-sizing: border-box;
+    min-width: 0;
+    display: flex;
+}
+
+.widget-cell > .widget-card {
+    margin: 0;
+    width: 100%;
+}
+
+.widget-empty {
+    width: 100%;
+    padding: 0 0.75rem;
+}
+
+/* Card header: handle + title + actions */
+.card .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.widget-title-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.widget-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+}
+
+.widget-action-btn {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-height: 0 !important;
+    line-height: 24px !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Layout mode */
+.widget-grid.layout-mode .widget-card {
+    cursor: grab;
+    touch-action: none;
+    outline: 1px dashed rgba(187, 134, 252, 0.55);
+    outline-offset: -1px;
+}
+
+.widget-grid.layout-mode .widget-body {
+    pointer-events: none;
+}
+
+.widget-grid.layout-mode .widget-actions {
+    display: none;
+}
+
+.widget-handle {
+    display: none !important;
+    cursor: grab;
+    color: var(--accent-color);
+    font-size: 1.25rem !important;
+}
+
+.widget-grid.layout-mode .widget-handle {
+    display: inline-block !important;
+}
+
+.widget-resize {
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 26px;
+    height: 26px;
+    cursor: nwse-resize;
+    touch-action: none;
+}
+
+.widget-grid.layout-mode .widget-resize {
+    display: block;
+}
+
+.widget-resize::after {
+    content: '';
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    width: 11px;
+    height: 11px;
+    border-right: 2px solid var(--accent-color);
+    border-bottom: 2px solid var(--accent-color);
+    border-radius: 2px;
+}
+
+.widget-cell.dragging {
+    opacity: 0.45;
+}
+
+.widget-cell.dragging .widget-card {
+    cursor: grabbing;
+}
+
+.widget-cell.resizing .widget-card {
+    outline: 2px solid var(--accent-color);
+    outline-offset: -1px;
+}
+
+.btn-outlined.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background-color: rgba(187, 134, 252, 0.12);
 }

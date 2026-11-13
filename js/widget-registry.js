@@ -1,6 +1,6 @@
 (function() {
     App.WidgetRegistry = {
-        createWidget: (type, id, title, config) => {
+        createWidget: (type, id, title, config, layout) => {
             let WidgetClass;
             if (type === 'html') {
                 WidgetClass = App.Widgets.HtmlWidget;
@@ -15,7 +15,7 @@
             if (!WidgetClass) {
                 throw new Error(`Unknown widget type: ${type}`);
             }
-            return new WidgetClass(id, title, config);
+            return new WidgetClass(id, title, config, layout);
         },
 
         getAvailableTypes: () => {

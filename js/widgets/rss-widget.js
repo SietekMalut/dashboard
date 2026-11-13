@@ -1,7 +1,7 @@
 (function() {
     class RssWidget extends App.BaseWidget {
-        constructor(id, title, config) {
-            super(id, title, config);
+        constructor(id, title, config, layout) {
+            super(id, title, config, layout);
         }
 
         async render(container) {
@@ -29,7 +29,18 @@
                     contentDiv.innerHTML = ''; // Clear loading
                     const list = document.createElement('div');
 
-                    let items = data.items;
+                    // The proxy answers with an object (not an array) when the feed is
+                    // suspended or invalid, e.g. { items: { title: "Feed suspended! ..." } }
+                    let items = Array.isArray(data.items) ? data.items : [];
+
+                    if (items.length === 0) {
+                        const messageEl = document.createElement('p');
+                        messageEl.className = 'grey-text';
+                        messageEl.textContent = (data.items && (data.items.title || data.items.message))
+                            || 'This feed returned no items.';
+                        contentDiv.appendChild(messageEl);
+                        return;
+                    }
 
                     // Filter by date if configured
                     if (this.config.filterDays && !isNaN(this.config.filterDays)) {

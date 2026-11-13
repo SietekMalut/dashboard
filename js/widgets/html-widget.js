@@ -1,7 +1,7 @@
 (function() {
     class HtmlWidget extends App.BaseWidget {
-        constructor(id, title, config) {
-            super(id, title, config);
+        constructor(id, title, config, layout) {
+            super(id, title, config, layout);
         }
 
         render(container) {
