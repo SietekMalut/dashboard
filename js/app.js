@@ -85,6 +85,7 @@
         const activeDashboard = App.DashboardManager.getActiveDashboard();
         if (!activeDashboard) {
             contentContainer.innerHTML = '<p class="center-align grey-text">No dashboard selected. Create one!</p>';
+            if (App.Refresh) App.Refresh.start([]); // stop refreshing widgets that are no longer on screen
             return;
         }
 
@@ -99,10 +100,32 @@
         title.className = 'left';
         title.style.margin = '0';
 
+        // Auto-refresh status line, sits under the dashboard title.
+        const refreshStatus = document.createElement('span');
+        refreshStatus.className = 'refresh-status';
+        refreshStatus.id = 'refresh-status';
+
+        const titleBlock = document.createElement('div');
+        titleBlock.className = 'dashboard-title-block';
+        titleBlock.appendChild(title);
+        titleBlock.appendChild(refreshStatus);
+
         const buttonsContainer = document.createElement('div');
         buttonsContainer.className = 'right';
         buttonsContainer.style.display = 'flex';
         buttonsContainer.style.gap = '10px';
+
+        // Refresh Now Button
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn-outlined waves-effect refresh-btn';
+        refreshBtn.innerHTML = '<i class="material-icons left">refresh</i>Refresh';
+        refreshBtn.setAttribute('aria-label', 'Reload all feeds now');
+        refreshBtn.title = 'Reload every feed now (they also refresh automatically)';
+        refreshBtn.onclick = () => {
+            if (!App.Refresh) return;
+            App.Refresh.runAll('manual');
+            M.toast({ html: 'Refreshing feeds…' });
+        };
 
         // Add Widget Dropdown Trigger
         const addWidgetBtn = document.createElement('button');
@@ -191,12 +214,13 @@
             });
         };
 
+        buttonsContainer.appendChild(refreshBtn);
         buttonsContainer.appendChild(addWidgetBtn);
         buttonsContainer.appendChild(layoutBtn);
         buttonsContainer.appendChild(resetBtn);
         buttonsContainer.appendChild(deleteBtn);
 
-        headerRow.appendChild(title);
+        headerRow.appendChild(titleBlock);
         headerRow.appendChild(buttonsContainer);
         contentContainer.appendChild(headerRow);
 
@@ -224,13 +248,21 @@
         });
         applyLayoutModeUI();
 
+        if (App.Refresh) {
+            App.Refresh.setStatusElement(refreshStatus);
+        }
+
         if (activeDashboard.widgets.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'widget-empty center-align grey-text';
             emptyMsg.innerHTML = '<p>No widgets yet. Use “Add Widget” to create one.</p>';
             grid.appendChild(emptyMsg);
+            if (App.Refresh) App.Refresh.start([]);
             return;
         }
+
+        // Every rendered widget is handed to the auto-refresh scheduler.
+        const widgetInstances = [];
 
         activeDashboard.widgets.forEach(widgetData => {
             try {
@@ -241,11 +273,16 @@
                     widgetData.config,
                     widgetData.layout
                 );
+                widgetInstances.push(widget);
                 widget.render(grid);
             } catch (e) {
                 console.error('Failed to render widget:', e);
             }
         });
+
+        if (App.Refresh) {
+            App.Refresh.start(widgetInstances);
+        }
     }
 
     function setupEventListeners() {

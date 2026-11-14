@@ -11,6 +11,12 @@
             throw new Error("Method 'render' must be implemented.");
         }
 
+        // Re-fetches the widget's remote data without rebuilding the card.
+        // Returns true when something was actually refreshed.
+        async refresh() {
+            return false;
+        }
+
         // Helper to create the standard card structure
         createCardElement() {
             const col = document.createElement('div');

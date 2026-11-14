@@ -10,18 +10,16 @@
             super(id, title, config, layout);
         }
 
-        async render(container) {
-            // Construct Google News RSS URL from query if not already set (or override it)
-            // The logic here is that we use the query to set the URL,
-            // then let the parent RssWidget handle the fetching/rendering.
+        // The Google News RSS URL is derived from the search query, so it can be
+        // rebuilt on every refresh without touching the stored config.
+        resolveFeedUrl() {
             if (this.config.query) {
-                // Using hl=en-US&gl=US&ceid=US:en for standard English results,
-                // but for simplicity just 'q' parameter works well globally usually.
-                this.config.url = `https://news.google.com/rss/search?q=${encodeURIComponent(this.config.query)}`;
-            } else {
-                // Fallback or error handled by parent if URL is missing
+                return `https://news.google.com/rss/search?q=${encodeURIComponent(this.config.query)}`;
             }
+            return this.config.url || null;
+        }
 
+        async render(container) {
             await super.render(container);
         }
     }

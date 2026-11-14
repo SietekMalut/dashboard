@@ -11,6 +11,7 @@ A lightweight, client-side dashboard application built with vanilla JavaScript a
   - **Google News Widget**: Search for news topics and display results.
 - **Persistence**: automatically saves your setup to browser's LocalStorage.
 - **Import/Export**: Export your configuration to JSON and import it back.
+- **Auto-refresh**: feed widgets reload every 15 minutes, plus a manual Refresh button.
 - **Responsive Design**: Works on desktop and mobile.
 
 ## Tech Stack
@@ -70,10 +71,28 @@ Layout data lives with the widget in LocalStorage, so it is included in **Export
 Layouts are responsive: below 992px wide a card never shrinks under half width, and on
 phones every card becomes full width.
 
+## Automatic feed refresh
+
+Every feed widget re-fetches its data **every 15 minutes** in the background, without
+reloading the page — scroll position, layout mode and open dialogs are untouched.
+
+- The status line under the dashboard title shows the interval and the last update time.
+- **Refresh** in the dashboard header forces an immediate reload of every widget.
+- Only widgets with remote data do any work; static HTML widgets answer `refresh()` with
+  `false` and are left alone.
+- The countdown is paused by the browser while the tab is hidden (timers are throttled).
+  When you come back after the interval has elapsed, the dashboard catches up at once.
+- Override the interval for testing with `?refresh=<minutes>`, e.g.
+  `?refresh=0.5` for 30 seconds.
+
+Implementation: `js/refresh.js` owns the scheduler (`App.Refresh`); each feed widget
+implements `resolveFeedUrl()` + `refresh()` so the card is never rebuilt. Note that
+GitHub Pages itself caches assets, not data — the fetches go straight to the RSS proxy.
+
 ### Asset cache
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=2`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=3`)
 on every release that touches code or styles so the change appears immediately.
 

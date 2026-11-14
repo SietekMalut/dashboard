@@ -474,3 +474,40 @@ textarea.materialize-textarea:focus:not([readonly]) {
     color: var(--accent-color);
     background-color: rgba(187, 134, 252, 0.12);
 }
+
+/* ============================================================
+   Auto-refresh: status line + manual refresh button
+   ============================================================ */
+
+.dashboard-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.refresh-status {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.refresh-btn .material-icons {
+    display: inline-block;
+}
+
+body.refreshing .refresh-btn .material-icons {
+    animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+    .refresh-status {
+        white-space: normal;
+    }
+}
