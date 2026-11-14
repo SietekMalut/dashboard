@@ -12,6 +12,7 @@ A lightweight, client-side dashboard application built with vanilla JavaScript a
 - **Persistence**: automatically saves your setup to browser's LocalStorage.
 - **Import/Export**: Export your configuration to JSON and import it back.
 - **Auto-refresh**: feed widgets reload every 15 minutes, plus a manual Refresh button.
+- **Thumbnails**: feed items show a small image when the feed provides one.
 - **Responsive Design**: Works on desktop and mobile.
 
 ## Tech Stack
@@ -89,10 +90,25 @@ Implementation: `js/refresh.js` owns the scheduler (`App.Refresh`); each feed wi
 implements `resolveFeedUrl()` + `refresh()` so the card is never rebuilt. Note that
 GitHub Pages itself caches assets, not data — the fetches go straight to the RSS proxy.
 
+## Feed thumbnails
+
+Every feed item shows a small image on the left when the feed provides one.
+
+- The item list still comes from the `ar-xr.com` proxy, which strips image metadata, so
+  thumbnails are resolved from `api.rss2json.com` (`thumbnail`, `enclosure` or the first
+  `<img>` in the item content).
+- Thumbnail maps are cached in LocalStorage (`dashboard_feed_thumbs_v1`) for **1 hour per
+  feed**, so auto-refresh does not call the image service every 15 minutes (it has a
+  60-requests/hour limit per IP). Failed lookups are retried after 10 minutes.
+- Feeds whose publisher blocks that service (for example Google News) simply stay
+  text-only — no error is shown and the rest of the widget keeps working.
+- Images are lazy-loaded and removed silently if they fail to load.
+- Turn images off for one widget with `"config": { "showImages": false }`.
+
 ### Asset cache
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=3`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=6`)
 on every release that touches code or styles so the change appears immediately.
 

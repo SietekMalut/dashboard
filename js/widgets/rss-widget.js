@@ -1,8 +1,149 @@
 (function() {
+    // Thumbnail enrichment.
+    // The rss-to-json proxy used for the items strips media:content / media:thumbnail,
+    // so images come from a second, image-aware source and are cached per feed.
+    const THUMB_CACHE_KEY = 'dashboard_feed_thumbs_v1';
+    const THUMB_TTL_MS = 60 * 60 * 1000;      // refresh the thumbnail map once an hour
+    const THUMB_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    const THUMB_MAX_ITEMS = 50;
+
+    // feedUrl -> Promise<map>, so two widgets on the same feed share one request.
+    const inflightThumbs = new Map();
+
+    function isHttpUrl(value) {
+        return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+    }
+
+    function normalizeLink(url) {
+        return String(url || '')
+            .trim()
+            .replace(/#.*$/, '')
+            .replace(/\/+$/, '');
+    }
+
+    function firstImageFromHtml(html) {
+        if (!html || typeof html !== 'string') return null;
+        // DOMParser creates an inert document, so the parsed <img> is never fetched.
+        if (typeof DOMParser === 'undefined') return null;
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const img = doc.querySelector('img[src]');
+        return img ? img.getAttribute('src') : null;
+    }
+
+    function pickThumb(item) {
+        if (!item) return null;
+
+        if (isHttpUrl(item.thumbnail)) return item.thumbnail.trim();
+
+        const enclosure = item.enclosure;
+        if (enclosure) {
+            if (isHttpUrl(enclosure.thumbnail)) return enclosure.thumbnail.trim();
+            if (isHttpUrl(enclosure.link) && /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(enclosure.link)) {
+                return enclosure.link.trim();
+            }
+        }
+
+        const fromHtml = firstImageFromHtml(item.content) || firstImageFromHtml(item.description);
+        if (isHttpUrl(fromHtml)) {
+            // Ignore obvious 1x1 tracking pixels.
+            if (/\b(1x1|pixel|spacer)\b/i.test(fromHtml)) return null;
+            return fromHtml.trim();
+        }
+        return null;
+    }
+
+    function readThumbCache() {
+        try {
+            const raw = localStorage.getItem(THUMB_CACHE_KEY);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function writeThumbCache(cache) {
+        try {
+            const cutoff = Date.now() - THUMB_MAX_AGE_MS;
+            Object.keys(cache).forEach(key => {
+                if (!cache[key] || !(cache[key].at > cutoff)) delete cache[key];
+            });
+            localStorage.setItem(THUMB_CACHE_KEY, JSON.stringify(cache));
+        } catch (e) {
+            // Quota or private mode: images simply fall back to no cache.
+        }
+    }
+
+    // Re-reads the cache right before writing so feeds that finish together
+    // do not overwrite each other's entry.
+    function saveThumbEntry(feedUrl, map, failed) {
+        const fresh = readThumbCache();
+        fresh[feedUrl] = { at: Date.now(), map: map, failed: !!failed };
+        writeThumbCache(fresh);
+    }
+
+    async function fetchThumbMap(feedUrl) {
+        if (inflightThumbs.has(feedUrl)) return inflightThumbs.get(feedUrl);
+
+        const promise = (async () => {
+            const cache = readThumbCache();
+            const cached = cache[feedUrl];
+            const ttl = cached && cached.failed ? 10 * 60 * 1000 : THUMB_TTL_MS;
+            if (cached && cached.map && (Date.now() - cached.at) < ttl) {
+                return cached.map;
+            }
+
+            const fallback = cached && cached.map ? cached.map : {};
+            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timer = controller ? setTimeout(() => controller.abort(), 12000) : null;
+
+            try {
+                const apiUrl = 'https://api.rss2json.com/v1/api.json?count=' + THUMB_MAX_ITEMS +
+                    '&rss_url=' + encodeURIComponent(feedUrl);
+                const response = await fetch(apiUrl, controller ? { signal: controller.signal } : undefined);
+                if (!response.ok) {
+                    saveThumbEntry(feedUrl, fallback, true);
+                    return fallback;
+                }
+
+                const data = await response.json();
+                if (!data || data.status !== 'ok' || !Array.isArray(data.items)) {
+                    saveThumbEntry(feedUrl, fallback, true);
+                    return fallback;
+                }
+
+                const map = {};
+                data.items.forEach(item => {
+                    const thumb = pickThumb(item);
+                    if (thumb && item.link) {
+                        map[normalizeLink(item.link)] = thumb;
+                    }
+                });
+
+                saveThumbEntry(feedUrl, map, false);
+                return map;
+            } catch (e) {
+                saveThumbEntry(feedUrl, fallback, true);
+                return fallback;
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
+        })();
+
+        inflightThumbs.set(feedUrl, promise);
+        try {
+            return await promise;
+        } finally {
+            inflightThumbs.delete(feedUrl);
+        }
+    }
+
     class RssWidget extends App.BaseWidget {
         constructor(id, title, config, layout) {
             super(id, title, config, layout);
             this._contentDiv = null;
+            this._thumbToken = 0;
         }
 
         async render(container) {
@@ -28,6 +169,36 @@
         // Message shown by the card when the URL cannot be resolved.
         missingUrlMessage() {
             return 'No RSS URL provided.';
+        }
+
+        addThumb(itemDiv, src) {
+            const img = document.createElement('img');
+            img.className = 'rss-item-thumb';
+            img.src = src;
+            img.alt = '';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.referrerPolicy = 'no-referrer';
+            img.addEventListener('error', () => {
+                img.remove();
+                itemDiv.classList.remove('has-thumb');
+            });
+            itemDiv.insertBefore(img, itemDiv.firstChild);
+            itemDiv.classList.add('has-thumb');
+        }
+
+        async applyThumbnails(contentDiv, feedUrl, token) {
+            if (this.config.showImages === false) return;
+
+            const map = await fetchThumbMap(feedUrl);
+            if (token !== this._thumbToken) return; // a newer render replaced this one
+
+            const items = contentDiv.querySelectorAll('.rss-item[data-link]');
+            items.forEach(itemDiv => {
+                if (itemDiv.querySelector('.rss-item-thumb')) return;
+                const thumb = map[normalizeLink(itemDiv.dataset.link)];
+                if (thumb) this.addThumb(itemDiv, thumb);
+            });
         }
 
         async loadItems(opts) {
@@ -100,14 +271,19 @@
                 items.forEach(item => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'rss-item';
+                    if (item.link) itemDiv.dataset.link = item.link;
+
+                    const body = document.createElement('div');
+                    body.className = 'rss-item-body';
 
                     const itemLink = document.createElement('a');
                     itemLink.className = 'rss-item-link';
                     itemLink.href = item.link;
                     itemLink.target = '_blank';
+                    itemLink.rel = 'noopener noreferrer';
                     itemLink.textContent = item.title;
 
-                    itemDiv.appendChild(itemLink);
+                    body.appendChild(itemLink);
 
                     // Handle showDate
                     if (this.config.showDate && item.pubDate) {
@@ -122,7 +298,7 @@
                         }
                         const date = new Date(dateStr);
                         dateEl.textContent = date.toLocaleString();
-                        itemDiv.appendChild(dateEl);
+                        body.appendChild(dateEl);
                     }
 
                     // Handle showDescription - Default to true for backward compatibility
@@ -134,12 +310,17 @@
                         const tempDiv = document.createElement('div');
                         tempDiv.innerHTML = item.description;
                         itemDesc.textContent = tempDiv.textContent.substring(0, 100) + '...';
-                        itemDiv.appendChild(itemDesc);
+                        body.appendChild(itemDesc);
                     }
 
+                    itemDiv.appendChild(body);
                     list.appendChild(itemDiv);
                 });
                 contentDiv.appendChild(list);
+
+                // Thumbnails load after the text so the list appears immediately.
+                this._thumbToken += 1;
+                this.applyThumbnails(contentDiv, rssUrl, this._thumbToken).catch(() => {});
                 return true;
 
             } catch (error) {

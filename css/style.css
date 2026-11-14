@@ -244,6 +244,34 @@ textarea.materialize-textarea:focus:not([readonly]) {
     margin: 4px 0 0 0;
 }
 
+/* Feed thumbnails */
+.rss-item.has-thumb {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.rss-item-thumb {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.rss-item-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+@media (max-width: 600px) {
+    .rss-item-thumb {
+        width: 56px;
+        height: 56px;
+    }
+}
+
 /* Scrollbar */
 .widget-body::-webkit-scrollbar {
     width: 8px;
