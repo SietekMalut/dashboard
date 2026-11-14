@@ -4,6 +4,10 @@
         activeDashboardId: null
     };
 
+    const DEFAULT_DASHBOARD_NAME = 'Berita Nasional';
+    // Older versions created this name automatically; rename it once on load.
+    const LEGACY_DEFAULT_NAME = 'Main Dashboard';
+
     class DashboardManager {
         constructor() {
             this.state = DEFAULT_STATE;
@@ -14,10 +18,23 @@
             if (loadedState && loadedState.dashboards && loadedState.dashboards.length > 0) {
                 this.state = loadedState;
                 this.state.dashboards.forEach(d => this.normalizeWidgetLayouts(d));
+                this.migrateLegacyDashboardName();
             } else {
                 // Create a default dashboard if none exists
-                this.addDashboard('Main Dashboard');
+                this.addDashboard(DEFAULT_DASHBOARD_NAME);
             }
+        }
+
+        // Renames the old auto-created "Main Dashboard" for people who already have saved state.
+        migrateLegacyDashboardName() {
+            let changed = false;
+            this.state.dashboards.forEach(dashboard => {
+                if (dashboard && dashboard.name === LEGACY_DEFAULT_NAME) {
+                    dashboard.name = DEFAULT_DASHBOARD_NAME;
+                    changed = true;
+                }
+            });
+            if (changed) this.save();
         }
 
         // Guarantees every widget has a usable layout object (old configs and imports included).

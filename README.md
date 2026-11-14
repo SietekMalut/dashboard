@@ -109,6 +109,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=7`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=8`)
 on every release that touches code or styles so the change appears immediately.
 
