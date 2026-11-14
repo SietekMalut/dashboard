@@ -27,6 +27,14 @@ nav {
 
 nav .brand-logo {
     color: var(--text-primary);
+    font-size: 1.6rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    nav .brand-logo {
+        font-size: 1.05rem;
+    }
 }
 
 nav ul a {
