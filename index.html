@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=8">
+    <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 
@@ -188,7 +188,50 @@
                     <option value="12">Full width</option>
                 </select>
                 <label>Widget Width</label>
-                <span class="helper-text">You can fine-tune width and height later in Layout mode</span>
+                <span class="helper-text">You can fine-tune width, height and position later in Layout mode</span>
+            </div>
+
+            <div class="widget-style-panel">
+                <span class="widget-style-heading">Card style</span>
+
+                <div class="accent-picker">
+                    <span class="accent-picker-label">Accent</span>
+                    <div class="accent-swatches" id="widget-accent-swatches">
+                        <button type="button" class="accent-swatch" data-accent="default" title="Default" aria-label="Default accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="blue" title="Blue" aria-label="Blue accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="green" title="Green" aria-label="Green accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="amber" title="Amber" aria-label="Amber accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="pink" title="Pink" aria-label="Pink accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="red" title="Red" aria-label="Red accent"></button>
+                        <button type="button" class="accent-swatch" data-accent="teal" title="Teal" aria-label="Teal accent"></button>
+                    </div>
+                </div>
+
+                <div class="input-field">
+                    <select id="widget-card-style">
+                        <option value="default" selected>Default</option>
+                        <option value="outline">Outline</option>
+                        <option value="solid">Solid tint</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                    <label>Card Style</label>
+                </div>
+
+                <div class="input-field">
+                    <select id="widget-density">
+                        <option value="normal" selected>Normal</option>
+                        <option value="compact">Compact</option>
+                    </select>
+                    <label>Content Density</label>
+                </div>
+
+                <div class="input-field">
+                    <select id="widget-title-align">
+                        <option value="left" selected>Left</option>
+                        <option value="center">Center</option>
+                    </select>
+                    <label>Title Alignment</label>
+                </div>
             </div>
 
         </div>
@@ -205,18 +248,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
     <!-- Application Scripts (Order Matters) -->
-    <script src="js/namespace.js?v=8"></script>
-    <script src="js/utils.js?v=8"></script>
-    <script src="js/layout.js?v=8"></script>
-    <script src="js/storage.js?v=8"></script>
-    <script src="js/widgets/base-widget.js?v=8"></script>
-    <script src="js/widgets/html-widget.js?v=8"></script>
-    <script src="js/widgets/rss-widget.js?v=8"></script>
-    <script src="js/widgets/google-news-widget.js?v=8"></script>
-    <script src="js/widgets/github-repo-widget.js?v=8"></script>
-    <script src="js/widget-registry.js?v=8"></script>
-    <script src="js/dashboard-manager.js?v=8"></script>
-    <script src="js/refresh.js?v=8"></script>
-    <script src="js/app.js?v=8"></script>
+    <script src="js/namespace.js?v=9"></script>
+    <script src="js/utils.js?v=9"></script>
+    <script src="js/layout.js?v=9"></script>
+    <script src="js/storage.js?v=9"></script>
+    <script src="js/widgets/base-widget.js?v=9"></script>
+    <script src="js/widgets/html-widget.js?v=9"></script>
+    <script src="js/widgets/rss-widget.js?v=9"></script>
+    <script src="js/widgets/google-news-widget.js?v=9"></script>
+    <script src="js/widgets/github-repo-widget.js?v=9"></script>
+    <script src="js/widget-registry.js?v=9"></script>
+    <script src="js/dashboard-manager.js?v=9"></script>
+    <script src="js/refresh.js?v=9"></script>
+    <script src="js/app.js?v=9"></script>
 </body>
 </html>

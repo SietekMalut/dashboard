@@ -17,8 +17,13 @@
             const loadedState = App.Storage.loadState();
             if (loadedState && loadedState.dashboards && loadedState.dashboards.length > 0) {
                 this.state = loadedState;
-                this.state.dashboards.forEach(d => this.normalizeWidgetLayouts(d));
-                this.migrateLegacyDashboardName();
+                let changed = false;
+                this.state.dashboards.forEach(dashboard => {
+                    this.normalizeWidgetLayouts(dashboard);
+                    if (this.ensureDashboardSettings(dashboard)) changed = true;
+                });
+                if (this.migrateLegacyDashboardName()) changed = true;
+                if (changed) this.save();
             } else {
                 // Create a default dashboard if none exists
                 this.addDashboard(DEFAULT_DASHBOARD_NAME);
@@ -34,7 +39,7 @@
                     changed = true;
                 }
             });
-            if (changed) this.save();
+            return changed;
         }
 
         // Guarantees every widget has a usable layout object (old configs and imports included).
@@ -42,7 +47,24 @@
             if (!dashboard || !Array.isArray(dashboard.widgets)) return;
             dashboard.widgets.forEach(widget => {
                 widget.layout = App.Layout.normalize(widget.layout);
+                if (widget.style) widget.style = App.Layout.normalizeStyle(widget.style);
             });
+        }
+
+        // Adds the arrangement fields that older saved dashboards/imports do not have.
+        ensureDashboardSettings(dashboard) {
+            if (!dashboard || typeof dashboard !== 'object') return false;
+            let changed = false;
+
+            if (typeof dashboard.canvas !== 'boolean') {
+                dashboard.canvas = false;
+                changed = true;
+            }
+            if (App.Layout.GAP_VALUES.indexOf(dashboard.gap) === -1) {
+                dashboard.gap = 'normal';
+                changed = true;
+            }
+            return changed;
         }
 
         save() {
@@ -69,7 +91,9 @@
             const newDashboard = {
                 id: App.Utils.generateUUID(),
                 name: name,
-                widgets: []
+                widgets: [],
+                canvas: false,
+                gap: 'normal'
             };
             this.state.dashboards.push(newDashboard);
             this.state.activeDashboardId = newDashboard.id; // Switch to new dashboard
@@ -86,7 +110,7 @@
             this.save();
         }
 
-        addWidgetToCurrent(type, title, config, layout) {
+        addWidgetToCurrent(type, title, config, layout, style) {
             const activeDashboard = this.getActiveDashboard();
             if (activeDashboard) {
                 const newWidget = {
@@ -94,7 +118,8 @@
                     type: type,
                     title: title,
                     config: config,
-                    layout: App.Layout.normalize(layout)
+                    layout: App.Layout.normalize(layout),
+                    style: App.Layout.normalizeStyle(style)
                 };
                 activeDashboard.widgets.push(newWidget);
                 this.save();
@@ -103,7 +128,7 @@
             return null;
         }
 
-        updateWidget(dashboardId, widgetId, title, config, layoutPatch) {
+        updateWidget(dashboardId, widgetId, title, config, layoutPatch, style) {
             const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
             if (dashboard) {
                 const widget = dashboard.widgets.find(w => w.id === widgetId);
@@ -114,6 +139,9 @@
                         widget.layout = App.Layout.normalize(
                             Object.assign({}, widget.layout, layoutPatch)
                         );
+                    }
+                    if (style) {
+                        widget.style = App.Layout.normalizeStyle(style);
                     }
                     this.save();
                     return widget;
@@ -155,6 +183,42 @@
             return widget.layout;
         }
 
+        // Arrangement fields of one dashboard: canvas mode, row gap.
+        setDashboardSettings(dashboardId, patch) {
+            const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
+            if (!dashboard || !patch) return null;
+
+            if (typeof patch.canvas === 'boolean') dashboard.canvas = patch.canvas;
+            if (patch.gap !== undefined) {
+                dashboard.gap = App.Layout.GAP_VALUES.indexOf(patch.gap) !== -1
+                    ? patch.gap
+                    : dashboard.gap;
+            }
+            this.save();
+            return dashboard;
+        }
+
+        // Used when leaving the free canvas so the flow order matches what the user saw.
+        sortWidgetsByPosition(dashboardId) {
+            const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
+            if (!dashboard) return;
+
+            const indexed = dashboard.widgets.map((widget, index) => ({
+                widget: widget,
+                index: index,
+                layout: App.Layout.normalize(widget.layout)
+            }));
+
+            indexed.sort((a, b) => {
+                if (a.layout.y !== b.layout.y) return a.layout.y - b.layout.y;
+                if (a.layout.x !== b.layout.x) return a.layout.x - b.layout.x;
+                return a.index - b.index;
+            });
+
+            dashboard.widgets = indexed.map(entry => entry.widget);
+            this.save();
+        }
+
         resetLayout(dashboardId) {
             const dashboard = this.state.dashboards.find(d => d.id === dashboardId);
             if (!dashboard) return;
@@ -162,6 +226,8 @@
             dashboard.widgets.forEach(widget => {
                 widget.layout = Object.assign({}, defaults);
             });
+            dashboard.canvas = false;
+            dashboard.gap = 'normal';
             this.save();
         }
 
@@ -181,7 +247,10 @@
                 if (!this.state.dashboards.find(d => d.id === this.state.activeDashboardId)) {
                      this.state.activeDashboardId = this.state.dashboards.length > 0 ? this.state.dashboards[0].id : null;
                 }
-                this.state.dashboards.forEach(d => this.normalizeWidgetLayouts(d));
+                this.state.dashboards.forEach(d => {
+                    this.normalizeWidgetLayouts(d);
+                    this.ensureDashboardSettings(d);
+                });
                 this.save();
                 return true;
             }

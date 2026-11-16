@@ -5,6 +5,7 @@
             this.title = title || 'Untitled Widget';
             this.config = config || {};
             this.layout = App.Layout.normalize(layout);
+            this.style = App.Layout.normalizeStyle(null);
         }
 
         render(container) {
@@ -20,9 +21,10 @@
         // Helper to create the standard card structure
         createCardElement() {
             const col = document.createElement('div');
-            col.className = 'widget-cell'; // Width/height come from the user's layout
+            col.className = 'widget-cell'; // Width/height/position come from the user's layout
             col.dataset.widgetId = this.id;
             App.Layout.applyCellSize(col, this.layout);
+            App.Layout.applyCellStyle(col, this.style);
 
             const card = document.createElement('div');
             card.className = 'card widget-card';

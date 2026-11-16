@@ -45,18 +45,44 @@ You can run this application locally without any server:
 
 Every dashboard has its own free-form grid. Nothing about the positions is hardcoded.
 
-- **Layout mode** — click **Layout** in the dashboard header. Cards get a dashed outline.
-- **Move** — drag any card and drop it where you want it. The order is saved immediately.
+- **Layout mode** — click **Layout** in the dashboard header. Cards get a dashed outline
+  and the arrangement toolbar appears.
+- **Move** — drag a card. In **Grid** mode dropping it on another card reorders the row;
+  in **Free** mode it follows the pointer anywhere on the canvas. Saved immediately.
 - **Resize** — drag the corner grip at the bottom-right of a card. Width snaps to the
   12-column grid (1/12 → full width), height is free in pixels. Drag the card shorter
   than the minimum height to return it to *automatic* height.
 - **Width at creation** — the Add/Edit Widget dialog has a **Widget Width** selector
   (narrow → full width).
 - **Reset** — the **Reset** button (visible in layout mode) puts every widget back to the
-  default 1/3 width and automatic height.
+  default 1/3 width, automatic height, Grid mode and normal spacing.
 
-Layout data lives with the widget in LocalStorage, so it is included in **Export** and
-**Import** (older configs without a `layout` field get defaults automatically):
+### Arrangement toolbar
+
+| Control | What it does |
+| --- | --- |
+| **Grid** | Classic flow grid: cards fill rows in order. |
+| **Free** | 2D canvas: every card keeps its own `x`/`y` on the same 12 columns. Drag anywhere, no overlap is forced. |
+| **Tight / Normal / Roomy** | Row spacing (0.75 / 1.5 / 2.5 rem). |
+| **Tidy** | Re-packs the canvas into neat rows in reading order (top→bottom, left→right). |
+
+Free canvas needs a wide screen (over 992px). On tablets and phones it automatically
+falls back to the normal stacked grid, and switching back to **Grid** keeps the visual
+order you had on the canvas.
+
+### Card style
+
+The Add/Edit Widget dialog has a **Card style** panel, so each card can look different:
+
+- **Accent** — 7 colors (default, blue, green, amber, pink, red, teal) used for the top
+  border, handle and title.
+- **Card style** — `default`, `outline` (transparent + colored border), `solid`
+  (tinted gradient) or `minimal` (no card, colored left rule).
+- **Content density** — `normal` or `compact` (tighter padding, smaller thumbnails).
+- **Title alignment** — `left` or `center`.
+
+Layout and style data live with the widget in LocalStorage, so they are included in
+**Export** and **Import** (older configs without these fields get defaults automatically):
 
 ```json
 {
@@ -64,11 +90,14 @@ Layout data lives with the widget in LocalStorage, so it is included in **Export
   "type": "rss",
   "title": "Anthropic",
   "config": { "url": "…" },
-  "layout": { "w": 8, "h": 420 }
+  "layout": { "w": 8, "h": 420, "x": 0, "y": 0 },
+  "style": { "accent": "blue", "theme": "solid", "density": "compact", "align": "left" }
 }
 ```
 
 `w` = columns out of 12 (1–12). `h` = height in pixels, or `0` for automatic.
+`x` / `y` = position on the free canvas (column 0–11, pixels from the top). The dashboard
+itself stores `"canvas": true|false` and `"gap": "compact" | "normal" | "loose"`.
 Layouts are responsive: below 992px wide a card never shrinks under half width, and on
 phones every card becomes full width.
 
@@ -109,6 +138,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=8`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=9`)
 on every release that touches code or styles so the change appears immediately.
 

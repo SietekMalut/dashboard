@@ -1,6 +1,6 @@
 (function() {
     App.WidgetRegistry = {
-        createWidget: (type, id, title, config, layout) => {
+        createWidget: (type, id, title, config, layout, style) => {
             let WidgetClass;
             if (type === 'html') {
                 WidgetClass = App.Widgets.HtmlWidget;
@@ -15,7 +15,12 @@
             if (!WidgetClass) {
                 throw new Error(`Unknown widget type: ${type}`);
             }
-            return new WidgetClass(id, title, config, layout);
+
+            // Style is assigned after construction so widget subclasses keep their
+            // existing (id, title, config, layout) constructors.
+            const instance = new WidgetClass(id, title, config, layout);
+            instance.style = App.Layout.normalizeStyle(style);
+            return instance;
         },
 
         getAvailableTypes: () => {

@@ -34,9 +34,12 @@
                 document.querySelectorAll('.widget-cell').forEach(cell => {
                     App.Layout.applyCellSize(cell, {
                         w: cell.dataset.w,
-                        h: cell.dataset.h
+                        h: cell.dataset.h,
+                        x: cell.dataset.x,
+                        y: cell.dataset.y
                     });
                 });
+                App.Layout.syncCanvasHeight(document.getElementById('widget-grid'));
             }, 150);
         });
     }
@@ -88,6 +91,8 @@
             if (App.Refresh) App.Refresh.start([]); // stop refreshing widgets that are no longer on screen
             return;
         }
+
+        const toolbar = createLayoutToolbar();
 
         // Add a header for the dashboard with buttons
         const headerRow = document.createElement('div');
@@ -182,15 +187,15 @@
         layoutBtn.innerHTML = '<i class="material-icons left">dashboard_customize</i>Layout';
         layoutBtn.setAttribute('aria-label', 'Toggle layout editing mode');
         layoutBtn.setAttribute('aria-pressed', 'false');
-        layoutBtn.title = 'Arrange widgets: drag to move, drag the corner to resize';
+        layoutBtn.title = 'Arrange widgets: grid or free canvas, sizes, gaps and style';
 
         // Reset Layout Button (only visible while editing the layout)
         const resetBtn = document.createElement('button');
         resetBtn.className = 'btn-outlined waves-effect';
         resetBtn.innerHTML = '<i class="material-icons left">restart_alt</i>Reset';
         resetBtn.style.display = 'none';
-        resetBtn.setAttribute('aria-label', 'Reset all widget sizes');
-        resetBtn.title = 'Reset every widget to its default size';
+        resetBtn.setAttribute('aria-label', 'Reset the whole layout');
+        resetBtn.title = 'Back to the default grid, sizes, positions and spacing';
         resetBtn.onclick = () => {
             App.DashboardManager.resetLayout(activeDashboard.id);
             renderWidgets();
@@ -202,6 +207,10 @@
             layoutBtn.classList.toggle('active', enabled);
             layoutBtn.setAttribute('aria-pressed', String(enabled));
             resetBtn.style.display = enabled ? 'inline-flex' : 'none';
+            if (toolbar) {
+                toolbar.classList.toggle('open', enabled);
+                syncLayoutToolbar(toolbar, activeDashboard);
+            }
         };
 
         layoutBtn.onclick = () => {
@@ -209,7 +218,7 @@
             applyLayoutModeUI();
             M.toast({
                 html: App.LayoutController.enabled
-                    ? 'Layout mode: drag a card to move it, drag the corner to resize'
+                    ? 'Layout mode: drag cards, resize from the corner, or switch to Free canvas'
                     : 'Layout saved'
             });
         };
@@ -223,6 +232,7 @@
         headerRow.appendChild(titleBlock);
         headerRow.appendChild(buttonsContainer);
         contentContainer.appendChild(headerRow);
+        contentContainer.appendChild(toolbar);
 
         // Initialize Dropdown after adding to DOM
         M.Dropdown.init(addWidgetBtn, {
@@ -230,10 +240,11 @@
             coverTrigger: false
         });
 
-        // Widget grid (free-form 12-column layout controlled by the user)
+        // Widget grid (flow grid or free canvas, controlled by the user)
         const grid = document.createElement('div');
         grid.className = 'widget-grid';
         grid.id = 'widget-grid';
+        App.Layout.applyGrid(grid, activeDashboard);
         contentContainer.appendChild(grid);
 
         App.LayoutController.attach({
@@ -244,8 +255,12 @@
             },
             onResize: (widgetId, layout) => {
                 App.DashboardManager.setWidgetLayout(activeDashboard.id, widgetId, layout);
+            },
+            onPlace: (widgetId, position) => {
+                App.DashboardManager.setWidgetLayout(activeDashboard.id, widgetId, position);
             }
         });
+        bindLayoutToolbar(toolbar, grid);
         applyLayoutModeUI();
 
         if (App.Refresh) {
@@ -271,7 +286,8 @@
                     widgetData.id,
                     widgetData.title,
                     widgetData.config,
-                    widgetData.layout
+                    widgetData.layout,
+                    widgetData.style
                 );
                 widgetInstances.push(widget);
                 widget.render(grid);
@@ -280,12 +296,203 @@
             }
         });
 
+        // The cards exist now, so the canvas can be measured and watched.
+        App.Layout.syncCanvasHeight(grid);
+        App.LayoutController.observeCells();
+
         if (App.Refresh) {
             App.Refresh.start(widgetInstances);
         }
     }
 
+    // ---------------------------------------------------------------
+    // Layout helpers: toolbar, canvas packing, DOM order
+    // ---------------------------------------------------------------
+
+    function createLayoutToolbar() {
+        const toolbar = document.createElement('div');
+        toolbar.className = 'layout-toolbar';
+        toolbar.id = 'layout-toolbar';
+        toolbar.innerHTML =
+            '<div class="layout-toolbar-group">' +
+                '<span class="layout-toolbar-label">Mode</span>' +
+                '<button type="button" class="layout-chip waves-effect" data-canvas="false">Grid</button>' +
+                '<button type="button" class="layout-chip waves-effect" data-canvas="true">Free</button>' +
+            '</div>' +
+            '<div class="layout-toolbar-group">' +
+                '<span class="layout-toolbar-label">Gap</span>' +
+                '<button type="button" class="layout-chip waves-effect" data-gap="compact">Tight</button>' +
+                '<button type="button" class="layout-chip waves-effect" data-gap="normal">Normal</button>' +
+                '<button type="button" class="layout-chip waves-effect" data-gap="loose">Roomy</button>' +
+            '</div>' +
+            '<button type="button" class="layout-chip layout-tidy waves-effect" id="layout-tidy">Tidy</button>' +
+            '<span class="layout-toolbar-hint" id="layout-hint"></span>';
+        return toolbar;
+    }
+
+    function syncLayoutToolbar(toolbar, dashboard) {
+        if (!toolbar || !dashboard) return;
+        const canvas = !!dashboard.canvas;
+        const gap = dashboard.gap || 'normal';
+
+        toolbar.querySelectorAll('[data-canvas]').forEach(btn => {
+            btn.classList.toggle('active', (btn.dataset.canvas === 'true') === canvas);
+        });
+        toolbar.querySelectorAll('[data-gap]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.gap === gap);
+        });
+
+        const tidy = toolbar.querySelector('#layout-tidy');
+        if (tidy) tidy.style.display = canvas ? 'inline-flex' : 'none';
+
+        const hint = toolbar.querySelector('#layout-hint');
+        if (hint) {
+            hint.textContent = canvas
+                ? (window.innerWidth > 992
+                    ? 'Drag any card anywhere. The 12-column grid still snaps it into place.'
+                    : 'Free canvas is shown as a normal grid on this screen width.')
+                : 'Drag a card onto another to reorder it. Drag the corner to resize.';
+        }
+    }
+
+    function bindLayoutToolbar(toolbar, grid) {
+        toolbar.querySelectorAll('[data-canvas]').forEach(btn => {
+            btn.onclick = () => {
+                const enabled = btn.dataset.canvas === 'true';
+                setDashboardCanvas(enabled, grid, toolbar);
+            };
+        });
+
+        toolbar.querySelectorAll('[data-gap]').forEach(btn => {
+            btn.onclick = () => {
+                const dashboard = App.DashboardManager.setDashboardSettings(
+                    App.DashboardManager.getActiveDashboard().id,
+                    { gap: btn.dataset.gap }
+                );
+                App.Layout.applyGrid(grid, dashboard);
+                syncLayoutToolbar(toolbar, dashboard);
+            };
+        });
+
+        const tidy = toolbar.querySelector('#layout-tidy');
+        if (tidy) {
+            tidy.onclick = () => {
+                tidyCanvas(grid, toolbar);
+                M.toast({ html: 'Cards packed into rows' });
+            };
+        }
+    }
+
+    // Switches between the flow grid and the free canvas, without re-fetching feeds.
+    function setDashboardCanvas(enabled, grid, toolbar) {
+        const manager = App.DashboardManager;
+        const dashboard = manager.getActiveDashboard();
+        if (!dashboard) return;
+
+        manager.setDashboardSettings(dashboard.id, { canvas: enabled });
+
+        if (enabled) {
+            ensureCanvasPositions(dashboard, grid);
+        } else {
+            // Keep the visual order of the canvas when falling back to a flow grid.
+            manager.sortWidgetsByPosition(dashboard.id);
+        }
+
+        const current = manager.getActiveDashboard();
+        App.Layout.applyGrid(grid, current);
+        layoutCells(grid, current);
+        syncLayoutToolbar(toolbar, current);
+        App.LayoutController.observeCells();
+    }
+
+    // Gives every card a first free position when a dashboard is opened on the canvas.
+    function ensureCanvasPositions(dashboard, grid) {
+        if (!dashboard || dashboard.widgets.length < 2) return;
+
+        const unplaced = dashboard.widgets.every(widget => {
+            const layout = App.Layout.normalize(widget.layout);
+            return layout.x === 0 && layout.y === 0;
+        });
+        if (!unplaced) return;
+
+        const heights = App.Layout.measureHeights(grid);
+        const positions = App.Layout.pack(
+            dashboard.widgets,
+            heights,
+            App.Layout.gapPx(dashboard.gap)
+        );
+
+        dashboard.widgets.forEach(widget => {
+            widget.layout = App.Layout.normalize(
+                Object.assign({}, widget.layout, positions[widget.id])
+            );
+        });
+        App.DashboardManager.save();
+    }
+
+    // Re-applies layout/style to the existing cards and puts the DOM in state order.
+    function layoutCells(grid, dashboard) {
+        if (!grid || !dashboard) return;
+
+        const cells = {};
+        grid.querySelectorAll('.widget-cell').forEach(cell => {
+            cells[cell.dataset.widgetId] = cell;
+        });
+
+        dashboard.widgets.forEach(widget => {
+            const cell = cells[widget.id];
+            if (!cell) return;
+            grid.appendChild(cell);
+            App.Layout.applyCellSize(cell, widget.layout);
+            App.Layout.applyCellStyle(cell, widget.style);
+        });
+
+        App.Layout.syncCanvasHeight(grid);
+    }
+
+    // Packs the canvas into tidy rows, keeping the current reading order.
+    function tidyCanvas(grid, toolbar) {
+        const manager = App.DashboardManager;
+        const dashboard = manager.getActiveDashboard();
+        if (!dashboard || !dashboard.canvas) return;
+
+        manager.sortWidgetsByPosition(dashboard.id);
+        const sorted = manager.getActiveDashboard();
+        const heights = App.Layout.measureHeights(grid);
+        const positions = App.Layout.pack(
+            sorted.widgets,
+            heights,
+            App.Layout.gapPx(sorted.gap)
+        );
+
+        sorted.widgets.forEach(widget => {
+            widget.layout = App.Layout.normalize(
+                Object.assign({}, widget.layout, positions[widget.id])
+            );
+        });
+        manager.save();
+        layoutCells(grid, sorted);
+        syncLayoutToolbar(toolbar, sorted);
+    }
+
+    // Bottom edge of the current canvas, used to drop a new widget below everything.
+    function canvasBottom(dashboard, grid) {
+        if (!grid) return 0;
+        let bottom = 0;
+        const gap = App.Layout.gapPx(dashboard.gap);
+        grid.querySelectorAll('.widget-cell').forEach(cell => {
+            const edge = cell.offsetTop + cell.offsetHeight + gap;
+            if (edge > bottom) bottom = edge;
+        });
+        return Math.round(bottom);
+    }
+
     function setupEventListeners() {
+        // Accent swatches in the widget modal
+        document.querySelectorAll('#widget-accent-swatches .accent-swatch').forEach(btn => {
+            btn.addEventListener('click', () => setActiveAccent(btn.dataset.accent));
+        });
+
         // New Dashboard
         const modalAddDashboard = M.Modal.getInstance(document.getElementById('modal-add-dashboard'));
         document.getElementById('btn-add-dashboard').addEventListener('click', () => {
@@ -309,8 +516,10 @@
             if (!type) return;
 
             const title = document.getElementById('widget-title').value.trim();
-            const widthValue = parseInt(document.getElementById('widget-layout-width').value, 10);
+            const widthEl = document.getElementById('widget-layout-width');
+            const widthValue = widthEl ? parseInt(widthEl.value, 10) : NaN;
             const layoutPatch = { w: isFinite(widthValue) ? widthValue : App.Layout.defaults().w };
+            const style = readWidgetStyle();
             let config = {};
 
             if (type === 'html') {
@@ -339,12 +548,22 @@
             if (widgetId) {
                 const activeDashboard = App.DashboardManager.getActiveDashboard();
                 if (activeDashboard) {
-                    App.DashboardManager.updateWidget(activeDashboard.id, widgetId, title, config, layoutPatch);
+                    App.DashboardManager.updateWidget(activeDashboard.id, widgetId, title, config, layoutPatch, style);
                 }
                 modal.removeAttribute('data-widget-id');
                 document.getElementById('confirm-add-widget').textContent = 'Add';
             } else {
-                App.DashboardManager.addWidgetToCurrent(type, title, config, { w: layoutPatch.w, h: 0 });
+                const added = App.DashboardManager.addWidgetToCurrent(type, title, config, { w: layoutPatch.w, h: 0 }, style);
+                const activeDashboard = App.DashboardManager.getActiveDashboard();
+
+                // On a free canvas a new card is dropped below everything else.
+                if (added && activeDashboard && activeDashboard.canvas) {
+                    const grid = document.getElementById('widget-grid');
+                    App.DashboardManager.setWidgetLayout(activeDashboard.id, added.id, {
+                        x: 0,
+                        y: canvasBottom(activeDashboard, grid)
+                    });
+                }
             }
             renderWidgets();
         });
@@ -420,8 +639,12 @@
             const nearest = presets.reduce((best, p) =>
                 Math.abs(p - currentWidth) < Math.abs(best - currentWidth) ? p : best, presets[0]);
             const widthSelect = document.getElementById('widget-layout-width');
-            widthSelect.value = String(nearest);
-            M.FormSelect.init(widthSelect);
+            if (widthSelect) {
+                widthSelect.value = String(nearest);
+                M.FormSelect.init(widthSelect);
+            }
+
+            populateWidgetStyle(widget.style);
 
             M.updateTextFields(); // Materialize helper to update labels
 
@@ -452,10 +675,63 @@
         });
     }
 
+    // ---------------------------------------------------------------
+    // Per-widget style form helpers
+    // ---------------------------------------------------------------
+
+    function setActiveAccent(accent) {
+        const modal = document.getElementById('modal-add-widget');
+        const swatches = document.querySelectorAll('#widget-accent-swatches .accent-swatch');
+        let matched = false;
+
+        swatches.forEach(btn => {
+            const active = btn.dataset.accent === accent;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', String(active));
+            if (active) matched = true;
+        });
+
+        modal.setAttribute('data-accent', matched ? accent : 'default');
+    }
+
+    function setSelectValue(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value;
+        M.FormSelect.init(el);
+    }
+
+    function resetWidgetStyleFields() {
+        setActiveAccent('default');
+        setSelectValue('widget-card-style', 'default');
+        setSelectValue('widget-density', 'normal');
+        setSelectValue('widget-title-align', 'left');
+    }
+
+    function populateWidgetStyle(style) {
+        const s = App.Layout.normalizeStyle(style);
+        setActiveAccent(s.accent);
+        setSelectValue('widget-card-style', s.theme);
+        setSelectValue('widget-density', s.density);
+        setSelectValue('widget-title-align', s.align);
+    }
+
+    function readWidgetStyle() {
+        const modal = document.getElementById('modal-add-widget');
+        const themeEl = document.getElementById('widget-card-style');
+        const densityEl = document.getElementById('widget-density');
+        const alignEl = document.getElementById('widget-title-align');
+        return {
+            accent: modal.getAttribute('data-accent') || 'default',
+            theme: themeEl ? themeEl.value : 'default',
+            density: densityEl ? densityEl.value : 'normal',
+            align: alignEl ? alignEl.value : 'left'
+        };
+    }
+
     function openAddWidgetModal(type) {
         const modalAddWidget = M.Modal.getInstance(document.getElementById('modal-add-widget'));
         const modalEl = document.getElementById('modal-add-widget');
-
         // Store selected type
         modalEl.setAttribute('data-selected-type', type);
 
@@ -466,8 +742,11 @@
         // Reset inputs
         document.getElementById('widget-title').value = '';
         const widthSelect = document.getElementById('widget-layout-width');
-        widthSelect.value = String(App.Layout.defaults().w);
-        M.FormSelect.init(widthSelect);
+        if (widthSelect) {
+            widthSelect.value = String(App.Layout.defaults().w);
+            M.FormSelect.init(widthSelect);
+        }
+        resetWidgetStyleFields();
         document.getElementById('html-content').value = '';
         document.getElementById('rss-url').value = '';
         document.getElementById('google-news-query').value = '';

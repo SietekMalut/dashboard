@@ -381,16 +381,66 @@ textarea.materialize-textarea:focus:not([readonly]) {
     flex-wrap: wrap;
     align-items: stretch;
     margin: 0 -0.75rem;
+    --gap-y: 1.5rem;
 }
+
+.widget-grid.gap-compact { --gap-y: 0.75rem; }
+.widget-grid.gap-normal { --gap-y: 1.5rem; }
+.widget-grid.gap-loose { --gap-y: 2.5rem; }
 
 .widget-cell {
     flex: 0 0 auto;
     width: calc(100% * var(--w, 4) / 12);
     padding: 0 0.75rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--gap-y, 1.5rem);
     box-sizing: border-box;
     min-width: 0;
     display: flex;
+}
+
+/* Free canvas: cards are placed on the same 12 columns but vertically free. */
+.widget-grid.free-canvas {
+    display: block;
+    position: relative;
+}
+
+.widget-grid.free-canvas .widget-cell {
+    position: absolute;
+    left: calc(100% * var(--x, 0) / 12);
+    top: var(--y, 0px);
+    width: calc(100% * var(--w, 4) / 12);
+    margin-bottom: 0;
+}
+
+.widget-grid.free-canvas .widget-cell > .widget-card {
+    height: 100%;
+}
+
+.widget-grid.free-canvas .widget-cell.dragging {
+    opacity: 1;
+    z-index: 6;
+}
+
+.widget-cell.free-dragging > .widget-card {
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+
+/* On tablets and phones the canvas falls back to a normal stacked grid. */
+@media (max-width: 992px) {
+    .widget-grid.free-canvas {
+        display: flex;
+        flex-wrap: wrap;
+        position: static;
+        height: auto !important;
+    }
+
+    .widget-grid.free-canvas .widget-cell {
+        position: static;
+        left: auto;
+        top: auto;
+        width: calc(100% * var(--w, 4) / 12);
+        margin-bottom: var(--gap-y, 1.5rem);
+    }
 }
 
 .widget-cell > .widget-card {
@@ -510,6 +560,206 @@ textarea.materialize-textarea:focus:not([readonly]) {
     color: var(--accent-color);
     background-color: rgba(187, 134, 252, 0.12);
 }
+
+/* ============================================================
+   Layout toolbar: arrangement mode, gap, tidy
+   ============================================================ */
+
+.layout-toolbar {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    background-color: rgba(255, 255, 255, 0.035);
+    border: 1px solid #333;
+    border-radius: 6px;
+}
+
+.layout-toolbar.open {
+    display: flex;
+}
+
+.layout-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.layout-toolbar-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-right: 2px;
+}
+
+.layout-chip {
+    height: 30px;
+    line-height: 28px;
+    padding: 0 12px;
+    border-radius: 15px;
+    border: 1px solid #444;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.layout-chip:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.layout-chip.active {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    background-color: rgba(187, 134, 252, 0.14);
+}
+
+.layout-chip.layout-tidy {
+    border-color: rgba(187, 134, 252, 0.55);
+    color: var(--accent-color);
+}
+
+.layout-toolbar-hint {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+@media (max-width: 992px) {
+    .layout-toolbar-hint {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Per-widget style: accent color, card theme, density, alignment
+   ============================================================ */
+
+.widget-cell > .widget-card {
+    border-top: 2px solid var(--widget-accent, var(--accent-color));
+}
+
+.widget-cell .widget-handle {
+    color: var(--widget-accent, var(--accent-color));
+}
+
+.widget-cell[data-accent]:not([data-accent="default"]) .widget-title-text {
+    color: var(--widget-accent);
+}
+
+.widget-cell[data-theme="outline"] > .widget-card {
+    background-color: transparent;
+    border: 1px solid var(--widget-accent);
+    box-shadow: none;
+}
+
+.widget-cell[data-theme="solid"] > .widget-card {
+    background-color: var(--card-bg-color);
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.015) 60%);
+    border: 1px solid var(--widget-accent);
+}
+
+.widget-cell[data-theme="minimal"] > .widget-card {
+    background-color: transparent;
+    border: none;
+    border-left: 3px solid var(--widget-accent);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.widget-cell[data-density="compact"] .card-content {
+    padding: 16px 16px 12px;
+}
+
+.widget-cell[data-density="compact"] .widget-body {
+    margin-top: 4px;
+}
+
+.widget-cell[data-density="compact"] .rss-item {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+}
+
+.widget-cell[data-density="compact"] .rss-item-thumb {
+    width: 56px;
+    height: 56px;
+}
+
+.widget-cell[data-align="center"] .widget-title-text {
+    text-align: center;
+}
+
+/* Accent picker in the widget modal */
+.widget-style-panel {
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px solid #333;
+}
+
+.widget-style-heading {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.accent-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.accent-picker-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.accent-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.accent-swatch {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.accent-swatch:hover {
+    transform: scale(1.1);
+}
+
+.accent-swatch.active {
+    border-color: #ffffff;
+    transform: scale(1.12);
+}
+
+.accent-swatch[data-accent="default"] { background-color: #bb86fc; }
+.accent-swatch[data-accent="blue"] { background-color: #64b5f6; }
+.accent-swatch[data-accent="green"] { background-color: #81c784; }
+.accent-swatch[data-accent="amber"] { background-color: #ffb74d; }
+.accent-swatch[data-accent="pink"] { background-color: #f06292; }
+.accent-swatch[data-accent="red"] { background-color: #e57373; }
+.accent-swatch[data-accent="teal"] { background-color: #4db6ac; }
 
 /* ============================================================
    Auto-refresh: status line + manual refresh button
