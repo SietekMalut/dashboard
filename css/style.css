@@ -1087,3 +1087,191 @@ a.na-overview-top-title:hover {
         font-size: 1.25rem;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Accounts: login, registration, approval and admin panel             */
+/* ------------------------------------------------------------------ */
+body.auth-locked .main-container,
+body.auth-locked nav {
+    filter: blur(2px);
+    pointer-events: none;
+    user-select: none;
+}
+
+.auth-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at 50% 20%, #2a2140 0%, var(--bg-color) 65%);
+}
+
+.auth-screen.visible {
+    display: flex;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 28px;
+    border: 1px solid #3a3a3a;
+    border-radius: 12px;
+    background: var(--card-bg-color);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.auth-brand {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.auth-heading {
+    margin: 10px 0 22px !important;
+    font-size: 1.5rem !important;
+}
+
+.auth-field label {
+    color: var(--text-secondary) !important;
+}
+
+.auth-field input {
+    color: var(--text-primary) !important;
+    border-bottom-color: #444 !important;
+}
+
+.auth-field input:focus {
+    border-bottom-color: var(--accent-color) !important;
+}
+
+.auth-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: var(--accent-color) !important;
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
+.auth-btn:disabled {
+    opacity: 0.6;
+}
+
+.auth-link {
+    color: var(--accent-color);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.auth-footer {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.auth-message {
+    min-height: 18px;
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: #69f0ae;
+}
+
+.auth-message.is-error {
+    color: #ff8a80;
+}
+
+.auth-hint {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.auth-pending {
+    text-align: center;
+    padding: 6px 0 12px;
+}
+
+.auth-pending-icon {
+    font-family: 'Material Icons';
+    font-size: 42px;
+    color: var(--accent-color);
+}
+
+.auth-user-label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 12px;
+    padding: 3px 10px;
+    border-radius: 14px;
+    background: rgba(187, 134, 252, 0.12);
+    color: var(--accent-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.admin-modal {
+    max-width: 720px;
+}
+
+.admin-list {
+    max-height: 50vh;
+    overflow: auto;
+    margin-top: 10px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+}
+
+.admin-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.admin-user {
+    font-weight: 600;
+}
+
+.admin-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+}
+
+.admin-status.ok {
+    color: #69f0ae;
+    background: rgba(105, 240, 174, 0.12);
+}
+
+.admin-status.wait {
+    color: #ffca28;
+    background: rgba(255, 202, 40, 0.12);
+}
+
+.admin-actions {
+    white-space: nowrap;
+}
+
+.admin-btn {
+    padding: 0 8px;
+    font-size: 0.75rem;
+    text-transform: none;
+}
+
+.admin-btn.approve { color: #69f0ae; }
+.admin-btn.reject { color: #ff8a80; }

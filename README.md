@@ -12,6 +12,9 @@ A lightweight, client-side media monitoring dashboard for RSS feeds, Google News
   - **News Analysis Widget**: Read-only analysis views (headlines, sentiment, sources, overview).
 - **Built-in Analysis Dashboard**: “Analisa Pemberitaan” is added once for every
   user. It reads the feeds in the **Berita Lokal** dashboard automatically.
+- **Accounts (optional)**: username + password login with super-admin approval,
+  no email required. When configured, all dashboards are locked until approved.
+- **Per-user cloud storage**: each account's dashboards sync to Supabase with RLS.
 - **Persistence**: automatically saves your setup to browser's LocalStorage.
 - **Import/Export**: Export your configuration to JSON and import it back.
 - **Auto-refresh**: feed widgets reload every 15 minutes, plus a manual Refresh button.
@@ -23,7 +26,8 @@ A lightweight, client-side media monitoring dashboard for RSS feeds, Google News
 - **HTML5**
 - **CSS3** (Materialize CSS)
 - **JavaScript** (No build step, no modules)
-- **No Backend**: Runs entirely in the browser.
+- **Optional backend**: runs entirely in the browser by default; with Supabase
+  credentials it gains accounts, approval and per-user cloud storage.
 
 ## Deployment & Hosting
 
@@ -75,6 +79,23 @@ A built-in dashboard is seeded once (on first load after this version) with four
 
 You can also add a **Analisis Berita** widget to any dashboard and choose the view,
 source dashboard name, and period in its settings.
+
+## Login & Persetujuan Akun
+
+Login aktif setelah `SUPABASE_URL` dan `SUPABASE_ANON_KEY` diisi di `js/config.js`.
+Sebelum itu aplikasi berjalan dalam **mode lokal** tanpa layar login.
+
+- Pengguna mendaftar hanya dengan **username** (3–20 karakter: huruf kecil, angka, `_`)
+  dan **password** (minimal 6 karakter). **Email tidak pernah diminta** — Supabase
+  mendapat email teknis otomatis dari username.
+- Akun baru berstatus **menunggu persetujuan** dan belum bisa membuka dashboard.
+- **Super admin** membuka menu **Admin** di header untuk menyetujui/menolak akun
+  dan mengatur peran.
+- Semua dashboard terkunci sampai akun disetujui; state tiap akun tersimpan terpisah
+  di Supabase dan dilindungi RLS.
+
+Panduan lengkap (SQL, konfigurasi, menunjuk super admin pertama):
+[`supabase/SETUP.md`](supabase/SETUP.md) dan [`supabase/schema.sql`](supabase/schema.sql).
 
 ## Widget Layout (fully user-controlled)
 
@@ -178,6 +199,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=12`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=13`)
 on every release that touches code or styles so the change appears immediately.
 

@@ -132,6 +132,9 @@
 
         save() {
             App.Storage.saveState(this.state);
+            // In account mode the same state is mirrored to the signed-in user's
+            // private row in Supabase (debounced by the auth module).
+            if (App.Auth && App.Auth.enabled) App.Auth.scheduleSave(this.state);
         }
 
         getDashboards() {

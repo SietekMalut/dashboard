@@ -13,6 +13,34 @@
     }
 
     async function initApp() {
+        // When accounts are configured, nothing is rendered until the user is
+        // signed in AND approved by a super admin.
+        const auth = App.Auth;
+        if (auth && auth.enabled) {
+            const session = await auth.getSession();
+            if (!session) {
+                App.AuthUI.show('login');
+                return;
+            }
+
+            const account = await auth.getProfile();
+            if (!account || (!account.approved && account.role !== 'super_admin')) {
+                await auth.signOut();
+                App.AuthUI.show(
+                    account ? 'blocked' : 'error',
+                    account ? account.username : 'Profil akun belum terbentuk. Hubungi super admin.'
+                );
+                return;
+            }
+
+            // Cloud state wins over whatever was left in this browser.
+            const cloudState = await auth.loadState();
+            if (cloudState && Array.isArray(cloudState.dashboards)) {
+                localStorage.setItem('dashboard_app_state', JSON.stringify(cloudState));
+            }
+            App.AuthUI.hide();
+        }
+
         // Initialize Dashboard Manager
         App.DashboardManager.init();
 
@@ -241,6 +269,7 @@
         buttonsContainer.appendChild(layoutBtn);
         buttonsContainer.appendChild(resetBtn);
         buttonsContainer.appendChild(deleteBtn);
+        if (App.AuthUI) App.AuthUI.decorateHeader(buttonsContainer, App.Auth.profile);
 
         headerRow.appendChild(titleBlock);
         headerRow.appendChild(buttonsContainer);
