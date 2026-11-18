@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css?v=10">
+    <link rel="stylesheet" href="../css/style.css?v=11">
 </head>
 <body>
 
@@ -133,6 +133,72 @@
                 </div>
             </div>
 
+            <!-- GitHub Repo Widget Config -->
+            <div id="config-github-repo" class="widget-config" style="display:none;">
+                <div class="input-field">
+                    <input id="github-repo-url" type="text" class="validate">
+                    <label for="github-repo-url">Repository URL (e.g. https://github.com/user/repo)</label>
+                </div>
+                <div class="input-field">
+                    <select id="github-update-type">
+                        <option value="releases" selected>Repo Releases</option>
+                        <option value="commits">Repo Commits</option>
+                        <option value="tags">Repo Tags</option>
+                    </select>
+                    <label>Update Type</label>
+                </div>
+                <div class="input-field">
+                    <input id="github-max-items" type="number" min="1" class="validate">
+                    <label for="github-max-items">Max Items (Optional)</label>
+                </div>
+                <div class="input-field">
+                    <input id="github-filter-days" type="number" min="1" class="validate">
+                    <label for="github-filter-days">Show News for Last N Days (Optional)</label>
+                </div>
+                <div class="switch" style="margin-bottom: 20px;">
+                    <label>
+                        Hide Description
+                        <input id="github-show-desc" type="checkbox" checked>
+                        <span class="lever"></span>
+                        Show Description
+                    </label>
+                </div>
+                <div class="switch" style="margin-bottom: 20px;">
+                    <label>
+                        Hide Date
+                        <input id="github-show-date" type="checkbox">
+                        <span class="lever"></span>
+                        Show Date
+                    </label>
+                </div>
+            </div>
+
+            <!-- News Analysis Widget Config -->
+            <div id="config-news-analysis" class="widget-config" style="display:none;">
+                <div class="input-field">
+                    <select id="analysis-mode">
+                        <option value="headlines" selected>Headline Terpopuler</option>
+                        <option value="sentiment">Sentimen (Positif / Negatif / Netral)</option>
+                        <option value="sources">Media Teraktif</option>
+                        <option value="overview">Ringkasan</option>
+                    </select>
+                    <label>Tampilan Analisis</label>
+                </div>
+                <div class="input-field">
+                    <input id="analysis-dashboard-name" type="text" value="Berita Lokal" class="validate">
+                    <label for="analysis-dashboard-name">Nama Dashboard Sumber Feed</label>
+                    <span class="helper-text">Feed RSS / Google News dibaca dari dashboard dengan nama ini.</span>
+                </div>
+                <div class="input-field">
+                    <input id="analysis-days" type="number" min="1" max="30" value="7" class="validate">
+                    <label for="analysis-days">Periode Analisis (hari)</label>
+                </div>
+                <p class="na-config-note">
+                    Popularitas diukur dari frekuensi judul yang sama di beberapa media
+                    (skor lintas media), bukan dari jumlah pembaca — RSS tidak menyediakan data pembaca.
+                </p>
+            </div>
+
             <div class="input-field">
                 <input id="widget-title" type="text" class="validate">
                 <label for="widget-title">Widget Title (Optional)</label>
@@ -195,21 +261,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
     <!-- Application Scripts (Order Matters) -->
-    <script src="../js/namespace.js?v=10"></script>
-    <script src="../js/utils.js?v=10"></script>
-    <script src="../js/layout.js?v=10"></script>
-    <script src="../js/storage.js?v=10"></script>
-    <script src="../js/widgets/base-widget.js?v=10"></script>
-    <script src="../js/widgets/html-widget.js?v=10"></script>
-    <script src="../js/widgets/rss-widget.js?v=10"></script>
-    <script src="../js/widgets/github-repo-widget.js?v=10"></script>
-    <script src="../js/widgets/google-news-widget.js?v=10"></script>
-    <script src="../js/widget-registry.js?v=10"></script>
-    <script src="../js/dashboard-manager.js?v=10"></script>
+    <script src="../js/namespace.js?v=11"></script>
+    <script src="../js/utils.js?v=11"></script>
+    <script src="../js/news-analysis.js?v=11"></script>
+    <script src="../js/layout.js?v=11"></script>
+    <script src="../js/storage.js?v=11"></script>
+    <script src="../js/widgets/base-widget.js?v=11"></script>
+    <script src="../js/widgets/html-widget.js?v=11"></script>
+    <script src="../js/widgets/rss-widget.js?v=11"></script>
+    <script src="../js/widgets/github-repo-widget.js?v=11"></script>
+    <script src="../js/widgets/google-news-widget.js?v=11"></script>
+    <script src="../js/widgets/news-analysis-widget.js?v=11"></script>
+    <script src="../js/widget-registry.js?v=11"></script>
+    <script src="../js/dashboard-manager.js?v=11"></script>
         <script>
         window.App.demoConfigUrl = "demo-config.json";
     </script>
-    <script src="../js/refresh.js?v=10"></script>
-    <script src="../js/app.js?v=10"></script>
+    <script src="../js/refresh.js?v=11"></script>
+    <script src="../js/app.js?v=11"></script>
 </body>
 </html>

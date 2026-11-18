@@ -9,6 +9,9 @@ A lightweight, client-side media monitoring dashboard for RSS feeds, Google News
   - **HTML Widget**: Render custom HTML content.
   - **RSS Widget**: Fetch and display RSS feeds (powered by rss2json).
   - **Google News Widget**: Search for news topics and display results.
+  - **News Analysis Widget**: Read-only analysis views (headlines, sentiment, sources, overview).
+- **Built-in Analysis Dashboard**: “Analisis Pemberitaan 7 Hari” is added once for every
+  user. It reads the feeds in the **Berita Lokal** dashboard automatically.
 - **Persistence**: automatically saves your setup to browser's LocalStorage.
 - **Import/Export**: Export your configuration to JSON and import it back.
 - **Auto-refresh**: feed widgets reload every 15 minutes, plus a manual Refresh button.
@@ -40,6 +43,38 @@ This repository is configured to automatically deploy to GitHub Pages.
 You can run this application locally without any server:
 1. Clone the repository.
 2. Open `index.html` directly in your web browser.
+
+## Analisis Pemberitaan 7 Hari
+
+A built-in dashboard is seeded once (on first load after this version) with four cards:
+
+| Card | What it shows |
+| --- | --- |
+| **Ringkasan Pemberitaan** | Number of articles, distinct media, configured feeds, and the top headline. |
+| **Headline Terpopuler** | Ranked headlines with a **cross-media popularity score**, number of media/outlets, and sentiment. |
+| **Sentimen Pemberitaan** | Share of **Positif / Negatif / Netral** articles, with counts and percentages. |
+| **Media Teraktif** | Media ordered by how many articles they published in the period. |
+
+### Where the data comes from
+
+- Only RSS and Google News widgets inside the dashboard named **Berita Lokal**
+  (case-insensitive; exact name match) are used. Other dashboards are ignored.
+- The proxy supplies title, link, publication date, description and Google News source
+  name — **it does not supply reader/view counts**. The “popularity” figure is therefore
+  honestly labelled a cross-media score: same story carried by more media scores higher,
+  with a small recency bonus. It is never presented as an audience number.
+- Only items from the last **7 days** (configurable 1–30 per widget) are analysed; one
+  article per title per outlet avoids inflating a single outlet's score.
+- Sentiment uses a local Indonesian keyword lexicon with negation and intensifier
+  handling. No external API or key is required, so results are approximate, not a
+  human-verified judgement.
+- One shared 10-minute cache serves all four cards; **Refresh** forces a new fetch.
+- The dashboard is seeded only once (tracked by `analysisDashboardSeeded` in saved
+  state). Deleting it afterwards will not bring it back. The active dashboard is never
+  switched by the seeding.
+
+You can also add a **Analisis Berita** widget to any dashboard and choose the view,
+source dashboard name, and period in its settings.
 
 ## Widget Layout (fully user-controlled)
 
@@ -143,6 +178,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=10`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=11`)
 on every release that touches code or styles so the change appears immediately.
 

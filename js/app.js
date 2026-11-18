@@ -1,5 +1,17 @@
 // Main App Logic
 (function() {
+    // Shared label used by the Add Widget menu and the add/edit modal title.
+    function widgetTypeLabel(type) {
+        const labels = {
+            html: 'HTML Widget',
+            rss: 'RSS Feed',
+            'google-news': 'Google News',
+            'github-repo': 'GitHub Repo',
+            'news-analysis': 'Analisis Berita'
+        };
+        return labels[type] || 'Widget';
+    }
+
     async function initApp() {
         // Initialize Dashboard Manager
         App.DashboardManager.init();
@@ -150,7 +162,8 @@
                 { type: 'html', label: 'HTML Widget', icon: 'code' },
                 { type: 'rss', label: 'RSS Feed', icon: 'rss_feed' },
                 { type: 'google-news', label: 'Google News', icon: 'public' },
-                { type: 'github-repo', label: 'GitHub Repo', icon: 'storage' }
+                { type: 'github-repo', label: 'GitHub Repo', icon: 'storage' },
+                { type: 'news-analysis', label: 'Analisis Berita', icon: 'insert_chart_outlined' }
             ];
 
             types.forEach(item => {
@@ -593,6 +606,11 @@
                 config.filterDays = document.getElementById('github-filter-days').value;
                 config.showDescription = document.getElementById('github-show-desc').checked;
                 config.showDate = document.getElementById('github-show-date').checked;
+            } else if (type === 'news-analysis') {
+                config.mode = document.getElementById('analysis-mode').value;
+                config.dashboardName = document.getElementById('analysis-dashboard-name').value.trim() || 'Berita Lokal';
+                config.days = document.getElementById('analysis-days').value || 7;
+                if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             }
 
             if (widgetId) {
@@ -676,8 +694,7 @@
             modalEl.setAttribute('data-widget-id', widgetId);
 
             // Update title to indicate editing
-            const typeLabel = widget.type === 'html' ? 'HTML Widget' : (widget.type === 'rss' ? 'RSS Feed' : (widget.type === 'google-news' ? 'Google News' : 'GitHub Repo'));
-            modalEl.querySelector('h4').textContent = `Edit ${typeLabel}`;
+            modalEl.querySelector('h4').textContent = `Edit ${widgetTypeLabel(widget.type)}`;
             document.getElementById('confirm-add-widget').textContent = 'Save';
 
             // Populate fields
@@ -721,6 +738,12 @@
                 document.getElementById('github-show-desc').checked = widget.config.showDescription !== false;
                 document.getElementById('github-show-date').checked = widget.config.showDate === true;
                 M.FormSelect.init(document.getElementById('github-update-type'));
+            } else if (widget.type === 'news-analysis') {
+                document.getElementById('analysis-mode').value = widget.config.mode || 'headlines';
+                document.getElementById('analysis-dashboard-name').value = widget.config.dashboardName || 'Berita Lokal';
+                document.getElementById('analysis-days').value = widget.config.days || 7;
+                M.FormSelect.init(document.getElementById('analysis-mode'));
+                M.updateTextFields();
             }
         });
     }
@@ -815,6 +838,10 @@
         document.getElementById('github-show-desc').checked = true;
         document.getElementById('github-show-date').checked = false;
         M.FormSelect.init(document.getElementById('github-update-type'));
+        document.getElementById('analysis-mode').value = 'headlines';
+        document.getElementById('analysis-dashboard-name').value = 'Berita Lokal';
+        document.getElementById('analysis-days').value = 7;
+        M.FormSelect.init(document.getElementById('analysis-mode'));
 
         // Show relevant config
         document.querySelectorAll('.widget-config').forEach(el => el.style.display = 'none');
@@ -826,11 +853,12 @@
             document.getElementById('config-google-news').style.display = 'block';
         } else if (type === 'github-repo') {
             document.getElementById('config-github-repo').style.display = 'block';
+        } else if (type === 'news-analysis') {
+            document.getElementById('config-news-analysis').style.display = 'block';
         }
 
         // Update modal title
-        const typeLabel = type === 'html' ? 'HTML Widget' : (type === 'rss' ? 'RSS Feed' : (type === 'google-news' ? 'Google News' : 'GitHub Repo'));
-        modalEl.querySelector('h4').textContent = `Add ${typeLabel}`;
+        modalEl.querySelector('h4').textContent = `Add ${widgetTypeLabel(type)}`;
 
         modalAddWidget.open();
     }

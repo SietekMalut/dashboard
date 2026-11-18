@@ -8,6 +8,11 @@
     // Older versions created this name automatically; rename it once on load.
     const LEGACY_DEFAULT_NAME = 'Main Dashboard';
 
+    const ANALYSIS_DASHBOARD_ID = 'analysis-7days';
+    const ANALYSIS_DASHBOARD_NAME = 'Analisis Pemberitaan 7 Hari';
+    // Stored on the state itself, so deleting the dashboard later never re-seeds it.
+    const ANALYSIS_SEED_KEY = 'analysisDashboardSeeded';
+
     class DashboardManager {
         constructor() {
             this.state = DEFAULT_STATE;
@@ -23,11 +28,53 @@
                     if (this.ensureDashboardSettings(dashboard)) changed = true;
                 });
                 if (this.migrateLegacyDashboardName()) changed = true;
+                if (this.ensureAnalysisDashboard()) changed = true;
                 if (changed) this.save();
             } else {
                 // Create a default dashboard if none exists
                 this.addDashboard(DEFAULT_DASHBOARD_NAME);
+                if (this.ensureAnalysisDashboard()) this.save();
             }
+        }
+
+        // Adds the built-in analysis dashboard exactly once. The active dashboard
+        // is deliberately left untouched: returning users keep where they were.
+        ensureAnalysisDashboard() {
+            if (this.state[ANALYSIS_SEED_KEY]) return false;
+            this.state[ANALYSIS_SEED_KEY] = true;
+
+            // An imported configuration may already contain our fixed id.
+            const existing = this.state.dashboards.find(d => d && d.id === ANALYSIS_DASHBOARD_ID);
+            if (existing) return true;
+
+            const widget = (id, title, mode, w, accent) => ({
+                id: id,
+                type: 'news-analysis',
+                title: title,
+                config: {
+                    mode: mode,
+                    dashboardName: 'Berita Lokal',
+                    days: 7
+                },
+                layout: App.Layout.normalize({ w: w, h: 0, x: 0, y: 0 }),
+                style: App.Layout.normalizeStyle({
+                    accent: accent, theme: 'default', density: 'normal', align: 'left'
+                })
+            });
+
+            this.state.dashboards.push({
+                id: ANALYSIS_DASHBOARD_ID,
+                name: ANALYSIS_DASHBOARD_NAME,
+                canvas: false,
+                gap: 'normal',
+                widgets: [
+                    widget('analysis-overview', 'Ringkasan Pemberitaan', 'overview', 12, 'blue'),
+                    widget('analysis-headlines', 'Headline Terpopuler', 'headlines', 8, 'amber'),
+                    widget('analysis-sentiment', 'Sentimen Pemberitaan', 'sentiment', 4, 'teal'),
+                    widget('analysis-sources', 'Media Teraktif', 'sources', 12, 'green')
+                ]
+            });
+            return true;
         }
 
         // Renames the old auto-created "Main Dashboard" for people who already have saved state.
