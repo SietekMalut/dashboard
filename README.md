@@ -64,7 +64,12 @@ Every dashboard has its own free-form grid. Nothing about the positions is hardc
 | **Grid** | Classic flow grid: cards fill rows in order. |
 | **Free** | 2D canvas: every card keeps its own `x`/`y` on the same 12 columns. Drag anywhere, no overlap is forced. |
 | **Tight / Normal / Roomy** | Row spacing (0.75 / 1.5 / 2.5 rem). |
-| **Tidy** | Re-packs the canvas into neat rows in reading order (top→bottom, left→right). |
+| **Tidy** | Re-packs the canvas into neat rows in reading order (top→bottom, left→right), using each card's current width. |
+| **4×4** | Preset for **4 cards per row × 4 rows** (16 widgets). Sets every card to quarter width with automatic height, then positions the rows using the measured heights. Extra widgets continue below. Works in both Grid and Free mode. |
+
+The **4×4** button is a starting arrangement, not a lock: after applying it you can still
+drag any card to another spot and resize its width/height freely from the corner grip.
+A fresh canvas also starts with four cards per row.
 
 Free canvas needs a wide screen (over 992px). On tablets and phones it automatically
 falls back to the normal stacked grid, and switching back to **Grid** keeps the visual
@@ -138,6 +143,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=9`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=10`)
 on every release that touches code or styles so the change appears immediately.
 

@@ -167,16 +167,27 @@
         },
 
         // Greedy row packing. Returns { widgetId: {x, y} } without touching the widgets.
-        pack: function (widgets, heights, gap) {
+        // With `columns` set, exactly that many widgets go in each row (the 4×4 preset
+        // uses 4). Without it, rows are filled until the 12 columns are used up.
+        pack: function (widgets, heights, gap, columns) {
             const gapPx = typeof gap === 'number' ? gap : GAP_PX.normal;
+            const parsedColumns = parseInt(columns, 10);
+            const perRow = isFinite(parsedColumns)
+                ? clamp(parsedColumns, 1, MAX_W)
+                : 0;
             const positions = {};
             let x = 0;
             let y = 0;
             let rowHeight = 0;
+            let index = 0;
 
             (widgets || []).forEach(function (widget) {
                 const layout = Layout.normalize(widget.layout);
-                if (x > 0 && x + layout.w > MAX_W) {
+                const wrap = perRow > 0
+                    ? index > 0 && index % perRow === 0
+                    : x > 0 && x + layout.w > MAX_W;
+
+                if (wrap) {
                     x = 0;
                     y += rowHeight + gapPx;
                     rowHeight = 0;
@@ -187,8 +198,9 @@
                 const measured = heights && heights[widget.id] > 0 ? heights[widget.id] : 320;
                 rowHeight = Math.max(rowHeight, measured);
                 x += layout.w;
+                index += 1;
 
-                if (x >= MAX_W) {
+                if (perRow === 0 && x >= MAX_W) {
                     x = 0;
                     y += rowHeight + gapPx;
                     rowHeight = 0;

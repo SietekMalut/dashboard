@@ -621,7 +621,8 @@ textarea.materialize-textarea:focus:not([readonly]) {
     background-color: rgba(187, 134, 252, 0.14);
 }
 
-.layout-chip.layout-tidy {
+.layout-chip.layout-tidy,
+.layout-chip.layout-preset {
     border-color: rgba(187, 134, 252, 0.55);
     color: var(--accent-color);
 }

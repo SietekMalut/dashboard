@@ -326,6 +326,7 @@
                 '<button type="button" class="layout-chip waves-effect" data-gap="loose">Roomy</button>' +
             '</div>' +
             '<button type="button" class="layout-chip layout-tidy waves-effect" id="layout-tidy">Tidy</button>' +
+            '<button type="button" class="layout-chip layout-preset waves-effect" id="layout-preset-4x4" title="Arrange up to 16 widgets: 4 per row, 4 rows. Each card can still be resized.">4×4</button>' +
             '<span class="layout-toolbar-hint" id="layout-hint"></span>';
         return toolbar;
     }
@@ -349,9 +350,9 @@
         if (hint) {
             hint.textContent = canvas
                 ? (window.innerWidth > 992
-                    ? 'Drag any card anywhere. The 12-column grid still snaps it into place.'
+                    ? 'Drag cards anywhere; 4×4 gives four per row. Resize from the corner.'
                     : 'Free canvas is shown as a normal grid on this screen width.')
-                : 'Drag a card onto another to reorder it. Drag the corner to resize.';
+                : 'Drag to reorder, resize from the corner, or use 4×4 for four cards per row.';
         }
     }
 
@@ -380,6 +381,11 @@
                 tidyCanvas(grid, toolbar);
                 M.toast({ html: 'Cards packed into rows' });
             };
+        }
+
+        const preset = toolbar.querySelector('#layout-preset-4x4');
+        if (preset) {
+            preset.onclick = () => applyFourByFour(grid, toolbar);
         }
     }
 
@@ -416,10 +422,12 @@
         if (!unplaced) return;
 
         const heights = App.Layout.measureHeights(grid);
+        // A fresh canvas starts with the preferred four-per-row arrangement.
         const positions = App.Layout.pack(
             dashboard.widgets,
             heights,
-            App.Layout.gapPx(dashboard.gap)
+            App.Layout.gapPx(dashboard.gap),
+            4
         );
 
         dashboard.widgets.forEach(widget => {
@@ -473,6 +481,48 @@
         manager.save();
         layoutCells(grid, sorted);
         syncLayoutToolbar(toolbar, sorted);
+    }
+
+    // 4×4 preset: four quarter-width cards per row, four rows for 16 widgets.
+    // Works in both Grid and Free mode; cards stay freely resizable afterwards.
+    function applyFourByFour(grid, toolbar) {
+        const manager = App.DashboardManager;
+        const dashboard = manager.getActiveDashboard();
+        if (!dashboard || !dashboard.widgets.length) {
+            M.toast({ html: 'Add a widget first' });
+            return;
+        }
+
+        const quarter = App.Layout.MAX_W / 4;
+        dashboard.widgets.forEach(widget => {
+            widget.layout = App.Layout.normalize(
+                Object.assign({}, widget.layout, { w: quarter, h: 0 })
+            );
+        });
+        manager.save();
+
+        // Apply the new widths before measuring: narrower cards can get taller.
+        layoutCells(grid, dashboard);
+        const heights = App.Layout.measureHeights(grid);
+        const positions = App.Layout.pack(
+            dashboard.widgets,
+            heights,
+            App.Layout.gapPx(dashboard.gap),
+            4
+        );
+
+        dashboard.widgets.forEach(widget => {
+            widget.layout = App.Layout.normalize(
+                Object.assign({}, widget.layout, positions[widget.id])
+            );
+        });
+        manager.save();
+
+        const current = manager.getActiveDashboard();
+        layoutCells(grid, current);
+        App.LayoutController.observeCells();
+        syncLayoutToolbar(toolbar, current);
+        M.toast({ html: '4×4 applied — drag the corner of any card to resize it' });
     }
 
     // Bottom edge of the current canvas, used to drop a new widget below everything.
