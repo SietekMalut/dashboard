@@ -10,7 +10,7 @@ A lightweight, client-side media monitoring dashboard for RSS feeds, Google News
   - **RSS Widget**: Fetch and display RSS feeds (powered by rss2json).
   - **Google News Widget**: Search for news topics and display results.
   - **News Analysis Widget**: Read-only analysis views (headlines, sentiment, sources, overview).
-- **Built-in Analysis Dashboard**: “Analisis Pemberitaan 7 Hari” is added once for every
+- **Built-in Analysis Dashboard**: “Analisa Pemberitaan” is added once for every
   user. It reads the feeds in the **Berita Lokal** dashboard automatically.
 - **Persistence**: automatically saves your setup to browser's LocalStorage.
 - **Import/Export**: Export your configuration to JSON and import it back.
@@ -44,7 +44,7 @@ You can run this application locally without any server:
 1. Clone the repository.
 2. Open `index.html` directly in your web browser.
 
-## Analisis Pemberitaan 7 Hari
+## Analisa Pemberitaan
 
 A built-in dashboard is seeded once (on first load after this version) with four cards:
 
@@ -178,6 +178,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=11`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=12`)
 on every release that touches code or styles so the change appears immediately.
 

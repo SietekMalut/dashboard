@@ -9,7 +9,9 @@
     const LEGACY_DEFAULT_NAME = 'Main Dashboard';
 
     const ANALYSIS_DASHBOARD_ID = 'analysis-7days';
-    const ANALYSIS_DASHBOARD_NAME = 'Analisis Pemberitaan 7 Hari';
+    const ANALYSIS_DASHBOARD_NAME = 'Analisa Pemberitaan';
+    // Earlier releases seeded the built-in dashboard under this name.
+    const LEGACY_ANALYSIS_NAME = 'Analisis Pemberitaan 7 Hari';
     // Stored on the state itself, so deleting the dashboard later never re-seeds it.
     const ANALYSIS_SEED_KEY = 'analysisDashboardSeeded';
 
@@ -28,6 +30,7 @@
                     if (this.ensureDashboardSettings(dashboard)) changed = true;
                 });
                 if (this.migrateLegacyDashboardName()) changed = true;
+                if (this.renameAnalysisDashboard()) changed = true;
                 if (this.ensureAnalysisDashboard()) changed = true;
                 if (changed) this.save();
             } else {
@@ -35,6 +38,19 @@
                 this.addDashboard(DEFAULT_DASHBOARD_NAME);
                 if (this.ensureAnalysisDashboard()) this.save();
             }
+        }
+
+        // Renames the old built-in name for existing saved configs. A name the user
+        // changed themselves is never overwritten.
+        renameAnalysisDashboard() {
+            let changed = false;
+            this.state.dashboards.forEach(dashboard => {
+                if (dashboard && dashboard.name === LEGACY_ANALYSIS_NAME) {
+                    dashboard.name = ANALYSIS_DASHBOARD_NAME;
+                    changed = true;
+                }
+            });
+            return changed;
         }
 
         // Adds the built-in analysis dashboard exactly once. The active dashboard
