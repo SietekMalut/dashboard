@@ -22,8 +22,8 @@
 
     // National running text needs a slightly calmer pace than the global 8s.
     const NASIONAL_DASHBOARD_NAME = 'Berita Nasional';
-    const NASIONAL_TICKER_SPEED = 12;
-    const NASIONAL_TICKER_SPEED_KEY = 'nasionalTickerSpeed12';
+    const NASIONAL_TICKER_SPEED = 18;
+    const NASIONAL_TICKER_SPEED_KEY = 'nasionalTickerSpeed18';
 
     class DashboardManager {
         constructor() {
@@ -42,7 +42,7 @@
                 if (this.migrateLegacyDashboardName()) changed = true;
                 if (this.renameAnalysisDashboard()) changed = true;
                 if (this.setAllTickerSpeed()) changed = true;
-                if (this.setNasionalTickerSpeed12()) changed = true;
+                if (this.setNasionalTickerSpeed18()) changed = true;
                 if (this.ensureAnalysisDashboard()) changed = true;
                 if (changed) this.save();
             } else {
@@ -86,10 +86,10 @@
             return matched;
         }
 
-        // Slows running text on (or sourced from) "Berita Nasional" to 12s per
-        // headline. Runs after the global 8s migration and only once, so a later
-        // speed chosen by the user is not overwritten.
-        setNasionalTickerSpeed12() {
+        // Slows running text on (or sourced from) "Berita Nasional" to 18s per
+        // headline. Runs after the earlier pace migrations and only once, so a
+        // later speed chosen by the user is not overwritten.
+        setNasionalTickerSpeed18() {
             if (this.state[NASIONAL_TICKER_SPEED_KEY]) return false;
             let matched = false;
 
