@@ -116,17 +116,17 @@
                 .sort((a, b) => b.date - a.date);
         }
 
-        // Duration is derived from the number of headlines, so adding more news
-        // never makes each item scroll past faster. Old configs used a fixed
-        // total duration (`speed`); those keep gentle loops but get a floor of
-        // 8 seconds per headline.
+        // Duration is derived from the number of headlines so each one always
+        // gets the configured time, even with many feeds. There is deliberately
+        // no upper/total cap: a cap made 8s and 18s produce the same 900s loop
+        // once enough headlines were present, so changing the pace had no effect.
         durationFor(articles) {
             let perHeadline = this.secondsPerHeadline;
             const legacy = parseInt(this.config.speed, 10);
             if (!this.config.secondsPerHeadline && isFinite(legacy) && legacy > 0 && articles.length) {
                 perHeadline = Math.max(8, legacy / articles.length);
             }
-            return Math.max(20, Math.min(900, Math.round(perHeadline * articles.length)));
+            return Math.max(1, Math.round(perHeadline * articles.length));
         }
 
         sourceLabel(data) {

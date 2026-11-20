@@ -89,7 +89,8 @@ A **Running Text** widget can be added to any dashboard. In its settings choose 
 
 It scrolls only headlines whose publication date is today in the browser's timezone;
 undated and older items are excluded. Set **seconds per headline** — total scroll
-duration grows with the number of headlines, so more news never scrolls faster.
+duration is exactly that value times the number of headlines, with no upper cap,
+so a pace change is always visible even with many feeds.
 Every running text uses **8 seconds per headline** (including existing widgets,
 updated once on load), except running text on — or sourced from — **Berita Nasional**,
 which uses a calmer **18 seconds per headline**. A speed you choose later is kept.
@@ -216,6 +217,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=22`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=23`)
 on every release that touches code or styles so the change appears immediately.
 
