@@ -91,7 +91,8 @@ It scrolls only headlines whose publication date is today in the browser's timez
 undated and older items are excluded. Set **seconds per headline** — total scroll
 duration grows with the number of headlines, so more news never scrolls faster.
 Every running text uses **8 seconds per headline** (including existing widgets,
-updated once on load). A speed you choose later is kept.
+updated once on load), except running text on — or sourced from — **Berita Nasional**,
+which uses a calmer **12 seconds per headline**. A speed you choose later is kept.
 Headline font size is adjustable from **12–48 px** (default 21 px) and applies on
 mobile as well. Hovering pauses the scroll.
 It reuses the same 10-minute cache as the analysis widgets.
@@ -215,6 +216,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=20`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=21`)
 on every release that touches code or styles so the change appears immediately.
 

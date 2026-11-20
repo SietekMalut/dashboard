@@ -20,6 +20,11 @@
     const TICKER_SPEED = 8;
     const TICKER_SPEED_KEY = 'allTickerSpeedSet8';
 
+    // National running text needs a slightly calmer pace than the global 8s.
+    const NASIONAL_DASHBOARD_NAME = 'Berita Nasional';
+    const NASIONAL_TICKER_SPEED = 12;
+    const NASIONAL_TICKER_SPEED_KEY = 'nasionalTickerSpeed12';
+
     class DashboardManager {
         constructor() {
             this.state = DEFAULT_STATE;
@@ -37,6 +42,7 @@
                 if (this.migrateLegacyDashboardName()) changed = true;
                 if (this.renameAnalysisDashboard()) changed = true;
                 if (this.setAllTickerSpeed()) changed = true;
+                if (this.setNasionalTickerSpeed12()) changed = true;
                 if (this.ensureAnalysisDashboard()) changed = true;
                 if (changed) this.save();
             } else {
@@ -77,6 +83,32 @@
             });
 
             if (matched) this.state[TICKER_SPEED_KEY] = true;
+            return matched;
+        }
+
+        // Slows running text on (or sourced from) "Berita Nasional" to 12s per
+        // headline. Runs after the global 8s migration and only once, so a later
+        // speed chosen by the user is not overwritten.
+        setNasionalTickerSpeed12() {
+            if (this.state[NASIONAL_TICKER_SPEED_KEY]) return false;
+            let matched = false;
+
+            const isNasional = name => typeof name === 'string' &&
+                name.trim().toLowerCase() === NASIONAL_DASHBOARD_NAME.toLowerCase();
+
+            this.state.dashboards.forEach(dashboard => {
+                if (!dashboard || !Array.isArray(dashboard.widgets)) return;
+                const livesOnNasional = isNasional(dashboard.name);
+                dashboard.widgets.forEach(widget => {
+                    if (!widget || widget.type !== 'headline-ticker') return;
+                    const config = widget.config || (widget.config = {});
+                    if (!livesOnNasional && !isNasional(config.dashboardName)) return;
+                    config.secondsPerHeadline = NASIONAL_TICKER_SPEED;
+                    matched = true;
+                });
+            });
+
+            if (matched) this.state[NASIONAL_TICKER_SPEED_KEY] = true;
             return matched;
         }
 

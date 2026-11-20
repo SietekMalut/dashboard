@@ -968,7 +968,10 @@
         const dashboardRadio = document.querySelector('input[name="ticker-source-mode"][value="dashboard"]');
         if (dashboardRadio) dashboardRadio.checked = true;
         document.getElementById('ticker-dashboard-name').value = 'Berita Lokal';
-        document.getElementById('ticker-speed').value = 8;
+        const tickerDashboard = App.DashboardManager.getActiveDashboard();
+        const onNasional = tickerDashboard && typeof tickerDashboard.name === 'string' &&
+            tickerDashboard.name.trim().toLowerCase() === 'berita nasional';
+        document.getElementById('ticker-speed').value = onNasional ? 12 : 8;
         document.getElementById('ticker-font-size').value = 21;
         renderTickerSourceList([]);
         toggleTickerSourceFields();
