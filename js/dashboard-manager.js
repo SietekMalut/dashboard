@@ -15,6 +15,12 @@
     // Stored on the state itself, so deleting the dashboard later never re-seeds it.
     const ANALYSIS_SEED_KEY = 'analysisDashboardSeeded';
 
+    // Running text that shows national news reads at a calmer 8s per headline.
+    // Applied once so a speed the user sets afterwards is never overwritten.
+    const NASIONAL_DASHBOARD_NAME = 'Berita Nasional';
+    const NASIONAL_TICKER_SPEED = 8;
+    const NASIONAL_TICKER_SPEED_KEY = 'nasionalTickerSpeedSet';
+
     class DashboardManager {
         constructor() {
             this.state = DEFAULT_STATE;
@@ -31,6 +37,7 @@
                 });
                 if (this.migrateLegacyDashboardName()) changed = true;
                 if (this.renameAnalysisDashboard()) changed = true;
+                if (this.setNasionalTickerSpeed()) changed = true;
                 if (this.ensureAnalysisDashboard()) changed = true;
                 if (changed) this.save();
             } else {
@@ -51,6 +58,32 @@
                 }
             });
             return changed;
+        }
+
+        // Sets 8s per headline on running-text widgets that live on, or read from,
+        // the "Berita Nasional" dashboard. The flag is written only after a match,
+        // so a ticker added later is covered too — but a user's own edit is kept.
+        setNasionalTickerSpeed() {
+            if (this.state[NASIONAL_TICKER_SPEED_KEY]) return false;
+            let matched = false;
+
+            const isNasional = name => typeof name === 'string' &&
+                name.trim().toLowerCase() === NASIONAL_DASHBOARD_NAME.toLowerCase();
+
+            this.state.dashboards.forEach(dashboard => {
+                if (!dashboard || !Array.isArray(dashboard.widgets)) return;
+                const livesOnNasional = isNasional(dashboard.name);
+                dashboard.widgets.forEach(widget => {
+                    if (!widget || widget.type !== 'headline-ticker') return;
+                    const config = widget.config || (widget.config = {});
+                    if (!livesOnNasional && !isNasional(config.dashboardName)) return;
+                    config.secondsPerHeadline = NASIONAL_TICKER_SPEED;
+                    matched = true;
+                });
+            });
+
+            if (matched) this.state[NASIONAL_TICKER_SPEED_KEY] = true;
+            return matched;
         }
 
         // Adds the built-in analysis dashboard exactly once. The active dashboard
