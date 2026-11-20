@@ -14,7 +14,10 @@
         constructor(id, title, config, layout) {
             super(id, title, config, layout);
             this.dashboardName = this.config.dashboardName || 'Berita Lokal';
-            this.speed = Math.max(10, Math.min(300, parseInt(this.config.speed, 10) || 45));
+            const configured = parseInt(this.config.secondsPerHeadline, 10);
+            this.secondsPerHeadline = isFinite(configured) && configured > 0
+                ? Math.max(5, Math.min(60, configured))
+                : 12; // comfortable reading pace; older `speed` values are handled in draw()
             this._contentDiv = null;
             this._loading = false;
         }
@@ -105,6 +108,19 @@
                 .sort((a, b) => b.date - a.date);
         }
 
+        // Duration is derived from the number of headlines, so adding more news
+        // never makes each item scroll past faster. Old configs used a fixed
+        // total duration (`speed`); those keep gentle loops but get a floor of
+        // 8 seconds per headline.
+        durationFor(articles) {
+            let perHeadline = this.secondsPerHeadline;
+            const legacy = parseInt(this.config.speed, 10);
+            if (!this.config.secondsPerHeadline && isFinite(legacy) && legacy > 0 && articles.length) {
+                perHeadline = Math.max(8, legacy / articles.length);
+            }
+            return Math.max(20, Math.min(900, Math.round(perHeadline * articles.length)));
+        }
+
         errorMessage(data) {
             const name = data.dashboardName || this.dashboardName;
             if (data.error === 'no-feeds') {
@@ -164,7 +180,8 @@
 
             const viewport = this.el('div', 'ht-viewport');
             const track = this.el('div', 'ht-track');
-            track.style.animationDuration = this.speed + 's';
+            const duration = this.durationFor(articles);
+            track.style.animationDuration = duration + 's';
 
             // Two identical groups make the -50% loop seamless.
             track.appendChild(this.buildGroup(articles));
@@ -178,7 +195,8 @@
 
             const updated = data.fetchedAt ? ' · diperbarui ' + this.timeLabel(data.fetchedAt) : '';
             target.appendChild(this.el('div', 'ht-meta',
-                articles.length + ' headline · ' + (data.dashboardName || this.dashboardName) + updated));
+                articles.length + ' headline · ±' + Math.round(duration / articles.length) +
+                ' dtk/judul · ' + (data.dashboardName || this.dashboardName) + updated));
         }
 
         drawError(target) {

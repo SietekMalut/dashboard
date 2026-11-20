@@ -84,8 +84,9 @@ source dashboard name, and period in its settings.
 A **Running Text** widget can be added to any dashboard. It scrolls only headlines
 from the **Berita Lokal** dashboard whose publication date is today in the browser's
 timezone; undated items and older items are excluded. Set the source dashboard name
-and scroll duration in its settings. Hovering pauses the scroll. It reuses the same
-10-minute cache as the analysis widgets.
+and **seconds per headline** in its settings — total scroll duration grows with the
+number of headlines, so more news never scrolls faster. Hovering pauses the scroll.
+It reuses the same 10-minute cache as the analysis widgets.
 
 ## Login & Persetujuan Akun
 
@@ -206,6 +207,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=14`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=15`)
 on every release that touches code or styles so the change appears immediately.
 

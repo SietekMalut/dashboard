@@ -644,7 +644,7 @@
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             } else if (type === 'headline-ticker') {
                 config.dashboardName = document.getElementById('ticker-dashboard-name').value.trim() || 'Berita Lokal';
-                config.speed = document.getElementById('ticker-speed').value || 45;
+                config.secondsPerHeadline = document.getElementById('ticker-speed').value || 12;
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             }
 
@@ -781,7 +781,7 @@
                 M.updateTextFields();
             } else if (widget.type === 'headline-ticker') {
                 document.getElementById('ticker-dashboard-name').value = widget.config.dashboardName || 'Berita Lokal';
-                document.getElementById('ticker-speed').value = widget.config.speed || 45;
+                document.getElementById('ticker-speed').value = widget.config.secondsPerHeadline || 12;
                 M.updateTextFields();
             }
         });
@@ -882,7 +882,7 @@
         document.getElementById('analysis-days').value = 7;
         M.FormSelect.init(document.getElementById('analysis-mode'));
         document.getElementById('ticker-dashboard-name').value = 'Berita Lokal';
-        document.getElementById('ticker-speed').value = 45;
+        document.getElementById('ticker-speed').value = 12;
 
         // Show relevant config
         document.querySelectorAll('.widget-config').forEach(el => el.style.display = 'none');
