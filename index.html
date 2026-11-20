@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=15">
+    <link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 
@@ -202,11 +202,31 @@
 
             <!-- Running Text / Headline Ticker Config -->
             <div id="config-headline-ticker" class="widget-config" style="display:none;">
-                <div class="input-field">
+                <p class="na-config-note" style="margin-top:0;">Sumber headline:</p>
+                <p class="ht-radio-row">
+                    <label>
+                        <input name="ticker-source-mode" type="radio" value="dashboard" checked>
+                        <span>Dashboard tertentu</span>
+                    </label>
+                </p>
+                <p class="ht-radio-row">
+                    <label>
+                        <input name="ticker-source-mode" type="radio" value="widgets">
+                        <span>Pilih widget tertentu (boleh campur nasional &amp; lokal)</span>
+                    </label>
+                </p>
+
+                <div id="ticker-dashboard-field" class="input-field">
                     <input id="ticker-dashboard-name" type="text" value="Berita Lokal" class="validate">
                     <label for="ticker-dashboard-name">Nama Dashboard Sumber Feed</label>
                     <span class="helper-text">Headline diambil dari widget RSS / Google News pada dashboard dengan nama ini.</span>
                 </div>
+
+                <div id="ticker-widget-field" style="display:none;">
+                    <p class="na-config-note">Centang widget RSS / Google News yang menjadi sumber headline.</p>
+                    <div id="ticker-widget-list" class="ht-source-list"></div>
+                </div>
+
                 <div class="input-field">
                     <input id="ticker-speed" type="number" min="5" max="60" value="12" class="validate">
                     <label for="ticker-speed">Detik per Headline</label>
@@ -293,24 +313,24 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
     <!-- Application Scripts (Order Matters) -->
-    <script src="js/config.js?v=15"></script>
-    <script src="js/namespace.js?v=15"></script>
-    <script src="js/utils.js?v=15"></script>
-    <script src="js/news-analysis.js?v=15"></script>
-    <script src="js/layout.js?v=15"></script>
-    <script src="js/storage.js?v=15"></script>
-    <script src="js/widgets/base-widget.js?v=15"></script>
-    <script src="js/widgets/html-widget.js?v=15"></script>
-    <script src="js/widgets/rss-widget.js?v=15"></script>
-    <script src="js/widgets/google-news-widget.js?v=15"></script>
-    <script src="js/widgets/github-repo-widget.js?v=15"></script>
-    <script src="js/widgets/news-analysis-widget.js?v=15"></script>
-    <script src="js/widgets/headline-ticker-widget.js?v=15"></script>
-    <script src="js/widget-registry.js?v=15"></script>
-    <script src="js/dashboard-manager.js?v=15"></script>
-    <script src="js/refresh.js?v=15"></script>
-    <script src="js/auth.js?v=15"></script>
-    <script src="js/auth-ui.js?v=15"></script>
-    <script src="js/app.js?v=15"></script>
+    <script src="js/config.js?v=16"></script>
+    <script src="js/namespace.js?v=16"></script>
+    <script src="js/utils.js?v=16"></script>
+    <script src="js/news-analysis.js?v=16"></script>
+    <script src="js/layout.js?v=16"></script>
+    <script src="js/storage.js?v=16"></script>
+    <script src="js/widgets/base-widget.js?v=16"></script>
+    <script src="js/widgets/html-widget.js?v=16"></script>
+    <script src="js/widgets/rss-widget.js?v=16"></script>
+    <script src="js/widgets/google-news-widget.js?v=16"></script>
+    <script src="js/widgets/github-repo-widget.js?v=16"></script>
+    <script src="js/widgets/news-analysis-widget.js?v=16"></script>
+    <script src="js/widgets/headline-ticker-widget.js?v=16"></script>
+    <script src="js/widget-registry.js?v=16"></script>
+    <script src="js/dashboard-manager.js?v=16"></script>
+    <script src="js/refresh.js?v=16"></script>
+    <script src="js/auth.js?v=16"></script>
+    <script src="js/auth-ui.js?v=16"></script>
+    <script src="js/app.js?v=16"></script>
 </body>
 </html>

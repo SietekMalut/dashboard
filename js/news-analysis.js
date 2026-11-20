@@ -41,6 +41,8 @@
 
     let cache = { key: null, at: 0, data: null };
     let pending = null;
+    let widgetCache = { key: null, at: 0, data: null };
+    let widgetPending = null;
 
     function cleanText(value) {
         if (!value) return '';
@@ -295,6 +297,82 @@
         return result;
     }
 
+    // Resolve an explicit list of widget ids (any dashboard) to feed URLs.
+    // This lets the running text mix national and local news freely.
+    function widgetFeedsByIds(ids) {
+        const wanted = Array.isArray(ids) ? ids.filter(Boolean).map(String) : [];
+        if (!wanted.length) return [];
+
+        const byId = {};
+        const dashboards = (App.DashboardManager && App.DashboardManager.getDashboards()) || [];
+        dashboards.forEach(dashboard => {
+            (dashboard.widgets || []).forEach(widget => {
+                if (widget && widget.id) byId[String(widget.id)] = { widget: widget, dashboard: dashboard };
+            });
+        });
+
+        const feeds = [];
+        const seen = {};
+        wanted.forEach(id => {
+            const entry = byId[id];
+            if (!entry) return;
+            const widget = entry.widget;
+            if (!widget.config) return;
+
+            let url = null;
+            if (widget.type === 'rss') {
+                url = widget.config.url;
+            } else if (widget.type === 'google-news') {
+                url = widget.config.query
+                    ? 'https://news.google.com/rss/search?q=' + encodeURIComponent(widget.config.query)
+                    : widget.config.url;
+            }
+            if (!url || seen[url]) return;
+            seen[url] = true;
+            feeds.push({
+                url: url,
+                label: widget.title || stripHost(url),
+                dashboardName: entry.dashboard.name || '',
+                widgetId: id
+            });
+        });
+        return feeds.slice(0, MAX_FEEDS);
+    }
+
+    async function computeWidgetArticles(ids) {
+        const feeds = widgetFeedsByIds(ids);
+        const result = {
+            feeds: feeds,
+            articles: [],
+            sourcesLabel: feeds.map(feed => feed.label).filter(Boolean).join(', '),
+            fetchedAt: Date.now(),
+            error: null
+        };
+        if (!feeds.length) {
+            result.error = 'no-feeds';
+            return result;
+        }
+
+        const settled = await Promise.allSettled(feeds.map(feed => fetchFeed(feed, 7)));
+        const articles = [];
+        settled.forEach(entry => {
+            if (entry.status === 'fulfilled') articles.push.apply(articles, entry.value);
+        });
+        if (!articles.length) {
+            result.error = 'no-articles';
+            return result;
+        }
+
+        const seen = {};
+        result.articles = articles.filter(article => {
+            const key = article.title.toLowerCase() + '|' + article.source.toLowerCase();
+            if (seen[key]) return false;
+            seen[key] = true;
+            return true;
+        }).sort((a, b) => b.date - a.date);
+        return result;
+    }
+
     App.NewsAnalysis = {
         WEEK_MS: WEEK_MS,
 
@@ -330,8 +408,34 @@
             return pending;
         },
 
+        // Articles from an explicit set of feed widgets (any dashboard).
+        loadWidgets: function (ids, force) {
+            const key = JSON.stringify(Array.isArray(ids) ? ids.map(String).sort() : []);
+            if (!force && widgetCache.key === key && Date.now() - widgetCache.at < CACHE_MS) {
+                return Promise.resolve(widgetCache.data);
+            }
+            if (widgetPending) return widgetPending;
+
+            widgetPending = computeWidgetArticles(ids).then(data => {
+                widgetCache = { key: key, at: Date.now(), data: data };
+                return data;
+            }).catch(error => {
+                console.error('Selected widget headlines failed:', error);
+                const fallback = {
+                    feeds: [], articles: [], sourcesLabel: '',
+                    fetchedAt: Date.now(), error: 'failed'
+                };
+                return fallback;
+            }).then(data => {
+                widgetPending = null;
+                return data;
+            });
+            return widgetPending;
+        },
+
         invalidate: function () {
             cache = { key: null, at: 0, data: null };
+            widgetCache = { key: null, at: 0, data: null };
         },
 
         // Exposed for tests/debugging only.

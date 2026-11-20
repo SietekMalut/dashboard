@@ -14,6 +14,8 @@
         constructor(id, title, config, layout) {
             super(id, title, config, layout);
             this.dashboardName = this.config.dashboardName || 'Berita Lokal';
+            this.sourceMode = this.config.sourceMode === 'widgets' ? 'widgets' : 'dashboard';
+            this.widgetIds = Array.isArray(this.config.widgetIds) ? this.config.widgetIds : [];
             const configured = parseInt(this.config.secondsPerHeadline, 10);
             this.secondsPerHeadline = isFinite(configured) && configured > 0
                 ? Math.max(5, Math.min(60, configured))
@@ -40,10 +42,12 @@
 
             try {
                 if (!App.NewsAnalysis) throw new Error('missing-module');
-                const data = await App.NewsAnalysis.load({
-                    dashboardName: this.dashboardName,
-                    days: 7
-                }, !!force);
+                const data = (this.sourceMode === 'widgets' && this.widgetIds.length)
+                    ? await App.NewsAnalysis.loadWidgets(this.widgetIds, !!force)
+                    : await App.NewsAnalysis.load({
+                        dashboardName: this.dashboardName,
+                        days: 7
+                    }, !!force);
                 this.draw(target, data);
                 return !data || !data.error;
             } catch (error) {
@@ -121,7 +125,25 @@
             return Math.max(20, Math.min(900, Math.round(perHeadline * articles.length)));
         }
 
+        sourceLabel(data) {
+            if (this.sourceMode === 'widgets') {
+                return data.sourcesLabel || this.widgetIds.length + ' widget terpilih';
+            }
+            return data.dashboardName || this.dashboardName;
+        }
+
         errorMessage(data) {
+            if (this.sourceMode === 'widgets') {
+                if (data.error === 'no-feeds') {
+                    return 'Widget yang dipilih tidak ditemukan atau bukan feed RSS / Google News. ' +
+                        'Buka edit widget ini lalu pilih ulang sumbernya.';
+                }
+                if (data.error === 'no-articles') {
+                    return 'Tidak ada artikel yang bisa dibaca dari widget yang dipilih.';
+                }
+                return 'Headline belum bisa dimuat. Coba tombol Refresh.';
+            }
+
             const name = data.dashboardName || this.dashboardName;
             if (data.error === 'no-feeds') {
                 return 'Belum ada feed berita di dashboard “' + name + '”. ' +
@@ -170,8 +192,9 @@
             const articles = this.todayArticles(data);
             if (!articles.length) {
                 target.appendChild(this.el('div', 'ht-empty',
-                    'Belum ada headline dari dashboard “' + (data.dashboardName || this.dashboardName) +
-                    '” yang terbit hari ini.'));
+                    'Belum ada headline dari ' +
+                    (this.sourceMode === 'widgets' ? 'widget yang dipilih' : 'dashboard “' + this.sourceLabel(data) + '”') +
+                    ' yang terbit hari ini.'));
                 return;
             }
 
@@ -196,7 +219,7 @@
             const updated = data.fetchedAt ? ' · diperbarui ' + this.timeLabel(data.fetchedAt) : '';
             target.appendChild(this.el('div', 'ht-meta',
                 articles.length + ' headline · ±' + Math.round(duration / articles.length) +
-                ' dtk/judul · ' + (data.dashboardName || this.dashboardName) + updated));
+                ' dtk/judul · ' + this.sourceLabel(data) + updated));
         }
 
         drawError(target) {

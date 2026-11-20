@@ -643,6 +643,9 @@
                 config.days = document.getElementById('analysis-days').value || 7;
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             } else if (type === 'headline-ticker') {
+                const tickerSources = readTickerSources();
+                config.sourceMode = tickerSources.sourceMode;
+                config.widgetIds = tickerSources.widgetIds;
                 config.dashboardName = document.getElementById('ticker-dashboard-name').value.trim() || 'Berita Lokal';
                 config.secondsPerHeadline = document.getElementById('ticker-speed').value || 12;
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
@@ -780,8 +783,14 @@
                 M.FormSelect.init(document.getElementById('analysis-mode'));
                 M.updateTextFields();
             } else if (widget.type === 'headline-ticker') {
+                const mode = widget.config.sourceMode === 'widgets' && (widget.config.widgetIds || []).length
+                    ? 'widgets' : 'dashboard';
+                const radio = document.querySelector('input[name="ticker-source-mode"][value="' + mode + '"]');
+                if (radio) radio.checked = true;
                 document.getElementById('ticker-dashboard-name').value = widget.config.dashboardName || 'Berita Lokal';
                 document.getElementById('ticker-speed').value = widget.config.secondsPerHeadline || 12;
+                renderTickerSourceList(widget.config.widgetIds || []);
+                toggleTickerSourceFields();
                 M.updateTextFields();
             }
         });
@@ -841,6 +850,79 @@
         };
     }
 
+    // Running-text source picker: either one named dashboard, or an explicit
+    // set of RSS/Google News widgets from any dashboard (national + local mix).
+    function tickerSourceMode() {
+        const checked = document.querySelector('input[name="ticker-source-mode"]:checked');
+        return checked ? checked.value : 'dashboard';
+    }
+
+    function toggleTickerSourceFields() {
+        const mode = tickerSourceMode();
+        const dashboardField = document.getElementById('ticker-dashboard-field');
+        const widgetField = document.getElementById('ticker-widget-field');
+        if (dashboardField) dashboardField.style.display = mode === 'widgets' ? 'none' : 'block';
+        if (widgetField) widgetField.style.display = mode === 'widgets' ? 'block' : 'none';
+    }
+
+    function renderTickerSourceList(selectedIds) {
+        const list = document.getElementById('ticker-widget-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        const selected = new Set((selectedIds || []).map(String));
+        const dashboards = (App.DashboardManager && App.DashboardManager.getDashboards()) || [];
+        let count = 0;
+
+        dashboards.forEach(dashboard => {
+            const feeds = (dashboard.widgets || []).filter(widget =>
+                widget && (widget.type === 'rss' || widget.type === 'google-news')
+            );
+            if (!feeds.length) return;
+
+            const group = document.createElement('div');
+            group.className = 'ht-source-group';
+            const heading = document.createElement('div');
+            heading.className = 'ht-source-group-title';
+            heading.textContent = dashboard.name || '(tanpa nama)';
+            group.appendChild(heading);
+
+            feeds.forEach(widget => {
+                const option = document.createElement('label');
+                option.className = 'ht-source-option';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = String(widget.id);
+                checkbox.checked = selected.has(String(widget.id));
+                const text = document.createElement('span');
+                text.textContent = widget.title ||
+                    (widget.config && (widget.config.query || widget.config.url)) || widget.id;
+                option.appendChild(checkbox);
+                option.appendChild(text);
+                group.appendChild(option);
+                count += 1;
+            });
+            list.appendChild(group);
+        });
+
+        if (!count) {
+            const note = document.createElement('p');
+            note.className = 'na-config-note';
+            note.textContent = 'Belum ada widget RSS / Google News. Tambahkan dulu feed di dashboard mana pun.';
+            list.appendChild(note);
+        }
+    }
+
+    function readTickerSources() {
+        const mode = tickerSourceMode();
+        const ids = [...document.querySelectorAll('#ticker-widget-list input:checked')]
+            .map(input => input.value);
+        return {
+            sourceMode: mode === 'widgets' && ids.length ? 'widgets' : 'dashboard',
+            widgetIds: ids
+        };
+    }
+
     function openAddWidgetModal(type) {
         const modalAddWidget = M.Modal.getInstance(document.getElementById('modal-add-widget'));
         const modalEl = document.getElementById('modal-add-widget');
@@ -881,8 +963,15 @@
         document.getElementById('analysis-dashboard-name').value = 'Berita Lokal';
         document.getElementById('analysis-days').value = 7;
         M.FormSelect.init(document.getElementById('analysis-mode'));
+        const dashboardRadio = document.querySelector('input[name="ticker-source-mode"][value="dashboard"]');
+        if (dashboardRadio) dashboardRadio.checked = true;
         document.getElementById('ticker-dashboard-name').value = 'Berita Lokal';
         document.getElementById('ticker-speed').value = 12;
+        renderTickerSourceList([]);
+        toggleTickerSourceFields();
+        document.querySelectorAll('input[name="ticker-source-mode"]').forEach(radio => {
+            radio.onchange = toggleTickerSourceFields;
+        });
 
         // Show relevant config
         document.querySelectorAll('.widget-config').forEach(el => el.style.display = 'none');
