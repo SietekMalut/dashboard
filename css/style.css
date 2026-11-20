@@ -1345,7 +1345,7 @@ body.auth-locked nav {
 .ht-title {
     display: inline-block;
     color: var(--text-primary);
-    font-size: 1.4rem;
+    font-size: var(--ht-font-size, 1.4rem);
     font-weight: 600;
     line-height: 1.25;
 }
@@ -1436,7 +1436,7 @@ body.auth-locked nav {
 }
 
 @media (max-width: 600px) {
-    .ht-title { font-size: 1.15rem; }
+    .ht-title { font-size: var(--ht-font-size, 1.15rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

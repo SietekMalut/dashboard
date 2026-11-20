@@ -11,7 +11,6 @@
     const PROXY = 'https://ar-xr.com/dashboard/rss-to-json.php?url=';
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     const CACHE_MS = 10 * 60 * 1000;
-    const MAX_FEEDS = 20;
     const MAX_ITEMS_PER_FEED = 60;
 
     const STOPWORDS = ('yang di ke dari untuk pada dan atau ini itu para si sang lebih sangat ' +
@@ -214,7 +213,7 @@
             });
         });
 
-        return feeds.slice(0, MAX_FEEDS);
+        return feeds;
     }
 
     async function fetchFeed(feed, days) {
@@ -336,7 +335,7 @@
                 widgetId: id
             });
         });
-        return feeds.slice(0, MAX_FEEDS);
+        return feeds;
     }
 
     async function computeWidgetArticles(ids) {

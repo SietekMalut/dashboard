@@ -20,6 +20,10 @@
             this.secondsPerHeadline = isFinite(configured) && configured > 0
                 ? Math.max(5, Math.min(60, configured))
                 : 12; // comfortable reading pace; older `speed` values are handled in draw()
+            const fontPx = parseFloat(this.config.fontSizePx);
+            this.fontSizePx = isFinite(fontPx) && fontPx >= 12 && fontPx <= 48
+                ? fontPx
+                : 21; // default matches the readable 1.4rem headline
             this._contentDiv = null;
             this._loading = false;
         }
@@ -182,6 +186,9 @@
 
         draw(target, data) {
             target.innerHTML = '';
+            // Let the widget setting override the stylesheet default (and the
+            // smaller mobile fallback) without affecting any other widget.
+            target.style.setProperty('--ht-font-size', this.fontSizePx + 'px');
 
             if (!data || data.error) {
                 target.appendChild(this.el('div', 'ht-empty',

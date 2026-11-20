@@ -84,12 +84,14 @@ source dashboard name, and period in its settings.
 A **Running Text** widget can be added to any dashboard. In its settings choose either:
 - **Dashboard tertentu** — default `Berita Lokal`, or any other dashboard name; or
 - **Pilih widget tertentu** — tick individual RSS / Google News widgets across all
-  dashboards, so national and local feeds can be mixed freely.
+  dashboards, so national and local feeds can be mixed freely. There is **no limit**
+  on how many widgets/feeds can be selected.
 
 It scrolls only headlines whose publication date is today in the browser's timezone;
 undated and older items are excluded. Set **seconds per headline** — total scroll
 duration grows with the number of headlines, so more news never scrolls faster.
-Headlines are shown in a larger, easier-to-read font. Hovering pauses the scroll.
+Headline font size is adjustable from **12–48 px** (default 21 px) and applies on
+mobile as well. Hovering pauses the scroll.
 It reuses the same 10-minute cache as the analysis widgets.
 
 ## Login & Persetujuan Akun
@@ -211,6 +213,6 @@ Every feed item shows a small image on the left when the feed provides one.
 
 Local assets are requested with a `?v=N` query string (`index.html`, `demo/index.html`).
 GitHub Pages serves everything with `Cache-Control: max-age=600`, so a returning visitor
-can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=16`)
+can keep the previous `js/` and `css/` for up to 10 minutes. Bump `v` (currently `v=18`)
 on every release that touches code or styles so the change appears immediately.
 

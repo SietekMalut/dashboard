@@ -648,6 +648,7 @@
                 config.widgetIds = tickerSources.widgetIds;
                 config.dashboardName = document.getElementById('ticker-dashboard-name').value.trim() || 'Berita Lokal';
                 config.secondsPerHeadline = document.getElementById('ticker-speed').value || 12;
+                config.fontSizePx = document.getElementById('ticker-font-size').value || 21;
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             }
 
@@ -789,6 +790,7 @@
                 if (radio) radio.checked = true;
                 document.getElementById('ticker-dashboard-name').value = widget.config.dashboardName || 'Berita Lokal';
                 document.getElementById('ticker-speed').value = widget.config.secondsPerHeadline || 12;
+                document.getElementById('ticker-font-size').value = widget.config.fontSizePx || 21;
                 renderTickerSourceList(widget.config.widgetIds || []);
                 toggleTickerSourceFields();
                 M.updateTextFields();
@@ -967,6 +969,7 @@
         if (dashboardRadio) dashboardRadio.checked = true;
         document.getElementById('ticker-dashboard-name').value = 'Berita Lokal';
         document.getElementById('ticker-speed').value = 12;
+        document.getElementById('ticker-font-size').value = 21;
         renderTickerSourceList([]);
         toggleTickerSourceFields();
         document.querySelectorAll('input[name="ticker-source-mode"]').forEach(radio => {
