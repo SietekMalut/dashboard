@@ -1275,3 +1275,110 @@ body.auth-locked nav {
 
 .admin-btn.approve { color: #69f0ae; }
 .admin-btn.reject { color: #ff8a80; }
+
+/* ------------------------------------------------------------------ */
+/* Running text: today's headlines from the chosen news dashboard      */
+/* ------------------------------------------------------------------ */
+.ht-root {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ht-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(187, 134, 252, 0.35);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.ht-badge {
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: var(--accent-color);
+    color: #1a1a1a;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.ht-viewport {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.ht-track {
+    display: flex;
+    width: max-content;
+    animation: ht-scroll linear infinite;
+}
+
+.ht-strip:hover .ht-track {
+    animation-play-state: paused;
+}
+
+.ht-group {
+    display: flex;
+    flex: 0 0 auto;
+}
+
+.ht-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 22px;
+}
+
+.ht-link {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.ht-link:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.ht-source {
+    color: var(--accent-color);
+    font-size: 0.72rem;
+}
+
+.ht-time {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+.ht-meta {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+}
+
+.ht-empty {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+@keyframes ht-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ht-track { animation: none; }
+    .ht-viewport { overflow-x: auto; }
+}

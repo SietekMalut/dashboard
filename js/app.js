@@ -7,7 +7,8 @@
             rss: 'RSS Feed',
             'google-news': 'Google News',
             'github-repo': 'GitHub Repo',
-            'news-analysis': 'Analisis Berita'
+            'news-analysis': 'Analisis Berita',
+            'headline-ticker': 'Running Text'
         };
         return labels[type] || 'Widget';
     }
@@ -191,7 +192,8 @@
                 { type: 'rss', label: 'RSS Feed', icon: 'rss_feed' },
                 { type: 'google-news', label: 'Google News', icon: 'public' },
                 { type: 'github-repo', label: 'GitHub Repo', icon: 'storage' },
-                { type: 'news-analysis', label: 'Analisis Berita', icon: 'insert_chart_outlined' }
+                { type: 'news-analysis', label: 'Analisis Berita', icon: 'insert_chart_outlined' },
+                { type: 'headline-ticker', label: 'Running Text', icon: 'view_headline' }
             ];
 
             types.forEach(item => {
@@ -640,6 +642,10 @@
                 config.dashboardName = document.getElementById('analysis-dashboard-name').value.trim() || 'Berita Lokal';
                 config.days = document.getElementById('analysis-days').value || 7;
                 if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
+            } else if (type === 'headline-ticker') {
+                config.dashboardName = document.getElementById('ticker-dashboard-name').value.trim() || 'Berita Lokal';
+                config.speed = document.getElementById('ticker-speed').value || 45;
+                if (App.NewsAnalysis) App.NewsAnalysis.invalidate();
             }
 
             if (widgetId) {
@@ -773,6 +779,10 @@
                 document.getElementById('analysis-days').value = widget.config.days || 7;
                 M.FormSelect.init(document.getElementById('analysis-mode'));
                 M.updateTextFields();
+            } else if (widget.type === 'headline-ticker') {
+                document.getElementById('ticker-dashboard-name').value = widget.config.dashboardName || 'Berita Lokal';
+                document.getElementById('ticker-speed').value = widget.config.speed || 45;
+                M.updateTextFields();
             }
         });
     }
@@ -871,6 +881,8 @@
         document.getElementById('analysis-dashboard-name').value = 'Berita Lokal';
         document.getElementById('analysis-days').value = 7;
         M.FormSelect.init(document.getElementById('analysis-mode'));
+        document.getElementById('ticker-dashboard-name').value = 'Berita Lokal';
+        document.getElementById('ticker-speed').value = 45;
 
         // Show relevant config
         document.querySelectorAll('.widget-config').forEach(el => el.style.display = 'none');
@@ -884,6 +896,8 @@
             document.getElementById('config-github-repo').style.display = 'block';
         } else if (type === 'news-analysis') {
             document.getElementById('config-news-analysis').style.display = 'block';
+        } else if (type === 'headline-ticker') {
+            document.getElementById('config-headline-ticker').style.display = 'block';
         }
 
         // Update modal title

@@ -12,6 +12,8 @@
                 WidgetClass = App.Widgets.GithubRepoWidget;
             } else if (type === 'news-analysis') {
                 WidgetClass = App.Widgets.NewsAnalysisWidget;
+            } else if (type === 'headline-ticker') {
+                WidgetClass = App.Widgets.HeadlineTickerWidget;
             }
 
             if (!WidgetClass) {
@@ -26,7 +28,7 @@
         },
 
         getAvailableTypes: () => {
-            return ['html', 'rss', 'google-news', 'github-repo', 'news-analysis'];
+            return ['html', 'rss', 'google-news', 'github-repo', 'news-analysis', 'headline-ticker'];
         }
     };
 })();
