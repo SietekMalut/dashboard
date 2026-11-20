@@ -19,7 +19,7 @@
             const configured = parseInt(this.config.secondsPerHeadline, 10);
             this.secondsPerHeadline = isFinite(configured) && configured > 0
                 ? Math.max(5, Math.min(60, configured))
-                : 12; // comfortable reading pace; older `speed` values are handled in draw()
+                : 8; // comfortable reading pace; older `speed` values are handled in draw()
             const fontPx = parseFloat(this.config.fontSizePx);
             this.fontSizePx = isFinite(fontPx) && fontPx >= 12 && fontPx <= 48
                 ? fontPx
